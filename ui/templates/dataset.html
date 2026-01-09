@@ -1,0 +1,415 @@
+{% extends "layout.html" %}
+{% block content %}
+
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.0/papaparse.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/countup.js/2.0.7/countUp.min.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+<style>
+    /* --- THEME VARIABLES --- */
+    :root {
+        --primary: #059669; --primary-light: #d1fae5;
+        --danger: #ef4444; --danger-light: #fee2e2;
+        --warning: #f59e0b; --warning-light: #fef3c7;
+        --accent: #3b82f6; --accent-light: #eff6ff;
+        --text-dark: #1e293b; --text-muted: #64748b;
+        --border: #e2e8f0;
+        --glass: rgba(255, 255, 255, 0.95);
+        --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+    }
+
+    /* --- LAYOUT UTILS --- */
+    .fade-in { animation: fadeIn 0.5s ease-out forwards; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+    /* --- STATS CARDS --- */
+    .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 20px; margin-bottom: 30px; }
+    .stat-card {
+        background: var(--glass); border: 1px solid white; border-radius: 16px; padding: 24px;
+        box-shadow: var(--shadow); display: flex; align-items: center; justify-content: space-between;
+        transition: transform 0.2s;
+    }
+    .stat-card:hover { transform: translateY(-3px); }
+    .stat-val { font-size: 2rem; font-weight: 800; line-height: 1; color: var(--text-dark); }
+    .stat-lbl { font-size: 0.75rem; font-weight: 700; text-transform: uppercase; color: var(--text-muted); letter-spacing: 0.5px; margin-top: 5px; }
+    .stat-icon { width: 48px; height: 48px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 1.4rem; }
+
+    /* --- ACTION BAR --- */
+    .action-bar {
+        display: flex; gap: 15px; margin-bottom: 20px; flex-wrap: wrap;
+        background: white; padding: 15px; border-radius: 16px; box-shadow: var(--shadow);
+    }
+    .search-box { flex-grow: 1; position: relative; }
+    .search-box input {
+        width: 100%; padding: 12px 15px 12px 40px; border: 1px solid var(--border); border-radius: 10px;
+        outline: none; transition: 0.2s; font-family: inherit;
+    }
+    .search-box input:focus { border-color: var(--primary); box-shadow: 0 0 0 3px var(--primary-light); }
+    .search-box i { position: absolute; left: 15px; top: 50%; transform: translateY(-50%); color: var(--text-muted); }
+
+    /* --- BUTTONS --- */
+    .btn { padding: 10px 20px; border-radius: 10px; font-weight: 700; cursor: pointer; border: none; display: flex; align-items: center; gap: 8px; transition: 0.2s; font-size: 0.9rem; }
+    .btn-upload { background: var(--primary); color: white; }
+    .btn-upload:hover { background: #047857; }
+    .btn-clear { background: var(--danger-light); color: var(--danger); }
+    .btn-clear:hover { background: var(--danger); color: white; }
+    
+    .btn-sm { padding: 6px 12px; font-size: 0.8rem; border-radius: 6px; }
+    .btn-edit { background: var(--warning-light); color: var(--warning); }
+    .btn-del { background: var(--danger-light); color: var(--danger); }
+    .btn-use { background: var(--primary); color: white; }
+
+    /* --- TABLE --- */
+    .table-container { background: white; border-radius: 16px; overflow: hidden; box-shadow: var(--shadow); }
+    .table-scroll { overflow-x: auto; }
+    table { width: 100%; border-collapse: collapse; min-width: 800px; }
+    th { background: #f8fafc; text-align: left; padding: 15px 20px; font-size: 0.75rem; text-transform: uppercase; color: var(--text-muted); font-weight: 700; }
+    td { padding: 15px 20px; border-bottom: 1px solid var(--border); font-size: 0.9rem; color: var(--text-dark); }
+    tr:hover td { background: #f8fafc; }
+    
+    /* Badges */
+    .badge { padding: 4px 10px; border-radius: 20px; font-size: 0.7rem; font-weight: 800; text-transform: uppercase; }
+    .badge-risk { background: var(--danger-light); color: var(--danger); }
+    .badge-safe { background: var(--primary-light); color: var(--primary); }
+    .badge-loc { background: var(--accent-light); color: var(--accent); }
+
+    /* Pagination */
+    .pagination { display: flex; justify-content: flex-end; padding: 15px 20px; align-items: center; gap: 10px; border-top: 1px solid var(--border); }
+</style>
+
+<div style="max-width: 1400px; margin: 0 auto; padding: 20px;">
+
+    <div class="fade-in" style="margin-bottom: 30px;">
+        <h1 style="font-weight: 800; color: var(--text-dark); margin: 0;">Dataset Manager Pro</h1>
+        <p style="color: var(--text-muted);">Manajemen data persisten dengan fitur CRUD (Create, Read, Update, Delete).</p>
+    </div>
+
+    <div class="stats-grid fade-in">
+        <div class="stat-card">
+            <div><div class="stat-val" id="st-total">0</div><div class="stat-lbl">Total Data</div></div>
+            <div class="stat-icon" style="background:var(--primary-light); color:var(--primary);"><i class="fas fa-users"></i></div>
+        </div>
+        <div class="stat-card">
+            <div><div class="stat-val" id="st-age">0</div><div class="stat-lbl">Rata-rata Usia</div></div>
+            <div class="stat-icon" style="background:var(--accent-light); color:var(--accent);"><i class="fas fa-birthday-cake"></i></div>
+        </div>
+        <div class="stat-card">
+            <div><div class="stat-val" id="st-bmi">0</div><div class="stat-lbl">Rata-rata BMI</div></div>
+            <div class="stat-icon" style="background:var(--warning-light); color:var(--warning);"><i class="fas fa-weight"></i></div>
+        </div>
+        <div class="stat-card">
+            <div><div class="stat-val" id="st-smoker">0%</div><div class="stat-lbl">Rasio Perokok</div></div>
+            <div class="stat-icon" style="background:var(--danger-light); color:var(--danger);"><i class="fas fa-smoking"></i></div>
+        </div>
+    </div>
+
+    <div class="action-bar fade-in">
+        <div class="search-box">
+            <i class="fas fa-search"></i>
+            <input type="text" id="searchInput" placeholder="Cari data (nama, region, dll)..." onkeyup="DB.search(this.value)">
+        </div>
+        <button class="btn btn-upload" onclick="document.getElementById('csvInput').click()">
+            <i class="fas fa-cloud-upload-alt"></i> Import CSV
+        </button>
+        <button class="btn btn-clear" onclick="DB.clearAll()">
+            <i class="fas fa-trash-alt"></i> Hapus Semua
+        </button>
+        <input type="file" id="csvInput" accept=".csv" style="display:none" onchange="DB.handleUpload(this)">
+    </div>
+
+    <div class="table-container fade-in">
+        <div class="table-scroll">
+            <table id="mainTable">
+                <thead>
+                    <tr>
+                        <th>Usia</th>
+                        <th>Gender</th>
+                        <th>BMI</th>
+                        <th>Anak</th>
+                        <th>Perokok</th>
+                        <th>Wilayah</th>
+                        <th>Charges ($)</th>
+                        <th style="text-align:right;">Aksi</th>
+                    </tr>
+                </thead>
+                <tbody id="tableBody"></tbody>
+            </table>
+        </div>
+        <div class="pagination">
+            <span style="font-size:0.9rem; color:var(--text-muted); font-weight:600;" id="pageInfo">Page 1 of 1</span>
+            <div style="display:flex; gap:5px;">
+                <button class="btn btn-sm" style="background:#f1f5f9;" onclick="DB.prevPage()"><i class="fas fa-chevron-left"></i></button>
+                <button class="btn btn-sm" style="background:#f1f5f9;" onclick="DB.nextPage()"><i class="fas fa-chevron-right"></i></button>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<script>
+const DB = {
+
+    currentPage: 1,
+    rowsPerPage: 10,
+    STORAGE_KEY: 'app_dataset_v1',
+
+    data: [],
+    filteredData: [],
+    pageSlice: [],
+
+    animateNum: function (id, val, decimal=0, suffix='') {
+        if (window.countUp) {
+            new countUp.CountUp(id, val, { decimalPlaces: decimal, suffix, duration: 0.6 }).start();
+        } else {
+            document.getElementById(id).innerText = val + suffix;
+        }
+    },
+
+    calculateStats: function () {
+        if (this.data.length === 0) {
+            this.resetStats();
+            return;
+        }
+
+        let sumAge = 0, sumBmi = 0, smokerCount = 0;
+
+        this.data.forEach(row => {
+            sumAge += parseFloat(row.age || 0);
+            sumBmi += parseFloat(row.bmi || 0);
+            if (String(row.smoker).toLowerCase().trim() === 'yes') smokerCount++;
+        });
+
+        const count = this.data.length;
+        const avgAge = (sumAge / count).toFixed(1);
+        const avgBmi = (sumBmi / count).toFixed(1);
+        const smokerPct = ((smokerCount / count) * 100).toFixed(1);
+
+        this.animateNum('st-total', count);
+        this.animateNum('st-age', avgAge, 1);
+        this.animateNum('st-bmi', avgBmi, 1);
+        this.animateNum('st-smoker', smokerPct, 1, '%');
+    },
+
+    clearAll: function () {
+        if (!this.data.length) return;
+
+        Swal.fire({
+            title: 'Hapus SEMUA data?',
+            text: 'Tindakan tidak bisa dibatalkan.',
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#ef4444',
+            confirmButtonText: 'Hapus Semua'
+        }).then(res => {
+            if (res.isConfirmed) {
+                this.data = [];
+                this.filteredData = [];
+                this.currentPage = 1;
+                this.save();
+                this.render();
+                Swal.fire('Bersih', 'Semua data di-reset.', 'success');
+            }
+        });
+    },
+
+    deleteRow: function (index) {
+        Swal.fire({
+            title: 'Hapus item ini?',
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#ef4444'
+        }).then(res => {
+            if (res.isConfirmed) {
+                this.data.splice(index, 1);
+                this.save();
+                Swal.fire('Terhapus', '', 'success');
+            }
+        });
+    },
+
+    editRow: function (index) {
+        const row = this.data[index];
+
+        Swal.fire({
+            title: 'Edit Data',
+            html: `
+                <div style="display:grid; gap:10px;">
+                    <input id="e-age" class="swal2-input" value="${row.age}">
+                    <input id="e-bmi" class="swal2-input" value="${row.bmi}">
+                    <input id="e-child" class="swal2-input" value="${row.children}">
+                    <input id="e-cost" class="swal2-input" value="${row.charges}">
+                    <input id="e-smoke" class="swal2-input" value="${row.smoker}">
+                    <input id="e-reg" class="swal2-input" value="${row.region}">
+                </div>
+            `,
+            confirmButtonText: 'Simpan',
+            confirmButtonColor: '#059669',
+            preConfirm: () => ({
+                age: document.getElementById('e-age').value,
+                bmi: document.getElementById('e-bmi').value,
+                children: document.getElementById('e-child').value,
+                charges: document.getElementById('e-cost').value,
+                smoker: document.getElementById('e-smoke').value,
+                region: document.getElementById('e-reg').value,
+                sex: row.sex
+            })
+        }).then(res => {
+            if (res.isConfirmed) {
+                this.data[index] = { ...row, ...res.value };
+                this.save();
+                Swal.fire('Updated', 'Perubahan disimpan.', 'success');
+            }
+        });
+    },
+
+    handleUpload: function (input) {
+        const file = input.files[0];
+        if (!file) return;
+
+        Swal.fire({ title: 'Mengimpor...', didOpen: () => Swal.showLoading() });
+
+        Papa.parse(file, {
+            header: true,
+            skipEmptyLines: true,
+            dynamicTyping: true,
+            complete: (results) => {
+                const imported = results.data;
+
+                if (!imported[0] || !imported[0].hasOwnProperty('age')) {
+                    Swal.fire('Format salah', 'CSV tidak valid.', 'error');
+                    return;
+                }
+
+                this.data = [...this.data, ...imported];
+                this.currentPage = 1;
+
+                setTimeout(() => {
+                    this.save();
+                    Swal.fire('Sukses', 'Data berhasil diupload.', 'success');
+                }, 150);
+
+                input.value = '';
+            }
+        });
+    },
+
+    importFromAdmin: function (row) {
+        this.data.push(row);
+        this.save();
+    },
+
+    init: function () {
+        const saved = localStorage.getItem(this.STORAGE_KEY);
+
+        if (saved) {
+            this.data = JSON.parse(saved);
+        }
+
+        this.filteredData = [...this.data];
+        this.render();
+    },
+
+    nextPage: function () {
+        if ((this.currentPage * this.rowsPerPage) < this.filteredData.length) {
+            this.currentPage++;
+            this.render();
+        }
+    },
+
+    prevPage: function () {
+        if (this.currentPage > 1) {
+            this.currentPage--;
+            this.render();
+        }
+    },
+
+    render: function () {
+        this.calculateStats();
+
+        const tbody = document.getElementById('tableBody');
+        tbody.innerHTML = '';
+
+        if (!this.filteredData.length) {
+            this.renderEmpty();
+            return;
+        }
+
+        const start = (this.currentPage - 1) * this.rowsPerPage;
+        const end = start + this.rowsPerPage;
+
+        this.pageSlice = this.filteredData.slice(start, end);
+        const totalPages = Math.ceil(this.filteredData.length / this.rowsPerPage);
+
+        this.pageSlice.forEach(row => {
+            const index = this.data.indexOf(row);
+            const badge = String(row.smoker).toLowerCase() === 'yes'
+                ? '<span class="badge badge-risk">YES</span>'
+                : '<span class="badge badge-safe">NO</span>';
+
+            tbody.innerHTML += `
+                <tr>
+                    <td>${row.age}</td>
+                    <td style="text-transform:capitalize">${row.sex}</td>
+                    <td><strong>${parseFloat(row.bmi).toFixed(2)}</strong></td>
+                    <td>${row.children}</td>
+                    <td>${badge}</td>
+                    <td><span class="badge badge-loc">${row.region}</span></td>
+                    <td style="font-weight:700;color:var(--primary)">$${parseFloat(row.charges).toLocaleString()}</td>
+                    <td style="text-align:right;display:flex;gap:5px;justify-content:flex-end;">
+                        <button class="btn btn-sm btn-use" onclick="DB.useData(${index})"><i class="fas fa-magic"></i></button>
+                        <button class="btn btn-sm btn-edit" onclick="DB.editRow(${index})"><i class="fas fa-pen"></i></button>
+                        <button class="btn btn-sm btn-del" onclick="DB.deleteRow(${index})"><i class="fas fa-trash"></i></button>
+                    </td>
+                </tr>
+            `;
+        });
+
+        document.getElementById('pageInfo').innerText = `Page ${this.currentPage} of ${totalPages}`;
+    },
+
+    renderEmpty: function () {
+        document.getElementById('tableBody').innerHTML =
+            '<tr><td colspan="8" style="text-align:center;padding:30px;color:#94a3b8;">Belum ada data.</td></tr>';
+        this.resetStats();
+    },
+
+    resetStats: function () {
+        ['st-total', 'st-age', 'st-bmi', 'st-smoker'].forEach(id =>
+            document.getElementById(id).innerText = '0'
+        );
+    },
+
+    save: function () {
+        localStorage.setItem(this.STORAGE_KEY, JSON.stringify(this.data));
+        this.filteredData = [...this.data];
+        this.render();
+    },
+
+    search: function (q) {
+        q = q.toLowerCase();
+        this.filteredData = this.data.filter(row =>
+            Object.values(row).some(val => String(val).toLowerCase().includes(q))
+        );
+        this.currentPage = 1;
+        this.render();
+    },
+
+    useData: function (index) {
+        const row = this.data[index];
+        localStorage.setItem('predict_input_data', JSON.stringify(row));
+
+        Swal.fire({
+            icon: 'success',
+            title: 'Data Terpilih',
+            text: 'Mengarahkan ke prediksi...',
+            timer: 900,
+            showConfirmButton: false
+        }).then(() => window.location.href = '/predict');
+    }
+};
+
+document.addEventListener('DOMContentLoaded', () => DB.init());
+</script>
+
+{% endblock %}

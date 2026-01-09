@@ -1,0 +1,534 @@
+{% extends "layout.html" %}
+{% block content %}
+
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+<style>
+    /* --- 1. THEME VARIABLES (PEACEFUL HEALTH) --- */
+    :root {
+        /* Palette: Cream, White, Emerald */
+        --c-bg-app: #fdfbf7;        /* Creamy Off-white background */
+        --c-surface: #ffffff;       /* Pure white panels */
+        --c-primary: #10b981;       /* Emerald Green (Main) */
+        --c-primary-hover: #059669; /* Darker Emerald */
+        --c-accent: #34d399;        /* Soft Green Accent */
+        --c-text-main: #1e293b;     /* Dark Slate (Softer than black) */
+        --c-text-muted: #64748b;    /* Muted Grey */
+        --c-danger: #ef4444;        /* Soft Red */
+        
+        --shadow-soft: 0 10px 40px -10px rgba(16, 185, 129, 0.1); /* Greenish glow shadow */
+        --shadow-card: 0 4px 6px -1px rgba(0, 0, 0, 0.02), 0 2px 4px -1px rgba(0, 0, 0, 0.02);
+        --radius-lg: 24px;
+        --radius-md: 16px;
+        --font-main: 'Plus Jakarta Sans', sans-serif;
+    }
+
+    body {
+        background-color: var(--c-bg-app);
+        font-family: var(--font-main);
+        color: var(--c-text-main);
+        overflow-x: hidden;
+    }
+
+    /* --- 2. BACKGROUND ANIMATION --- */
+    #particles-canvas {
+        position: fixed;
+        top: 0; left: 0;
+        width: 100%; height: 100%;
+        z-index: 0; /* Behind everything */
+        pointer-events: none;
+    }
+
+    /* --- 3. LAYOUT WRAPPER --- */
+    .settings-container {
+        position: relative;
+        z-index: 10;
+        max-width: 1200px;
+        margin: 40px auto;
+        padding: 0 20px;
+        display: grid;
+        grid-template-columns: 260px 1fr;
+        gap: 40px;
+        align-items: start;
+    }
+
+    /* Header Title */
+    .page-header {
+        grid-column: 1 / -1;
+        margin-bottom: 10px;
+    }
+    .page-header h2 {
+    font-weight: 800;
+    font-size: 2rem;
+    background: linear-gradient(135deg, var(--c-primary), #3b82f6);
+    
+    /* FIX: Tambahkan properti standar ini untuk menghilangkan warning */
+    background-clip: text; 
+    -webkit-background-clip: text;
+    
+    -webkit-text-fill-color: transparent;
+    margin-bottom: 10px;
+}
+    .page-header p { color: var(--c-text-muted); }
+
+    /* --- 4. NAVIGATION TABS (Glassy Left Panel) --- */
+    .nav-panel {
+        background: rgba(255, 255, 255, 0.6);
+        backdrop-filter: blur(20px);
+        border: 1px solid rgba(255, 255, 255, 0.8);
+        border-radius: var(--radius-lg);
+        padding: 20px;
+        box-shadow: var(--shadow-card);
+        position: sticky;
+        top: 20px;
+    }
+
+    .nav-item {
+        display: flex;
+        align-items: center;
+        gap: 15px;
+        padding: 16px 20px;
+        margin-bottom: 10px;
+        border-radius: var(--radius-md);
+        color: var(--c-text-muted);
+        text-decoration: none;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        font-weight: 600;
+        border: 1px solid transparent;
+    }
+
+    .nav-item:hover {
+        background: rgba(16, 185, 129, 0.05);
+        color: var(--c-primary);
+        transform: translateX(5px);
+    }
+
+    .nav-item.active {
+        background: var(--c-surface);
+        color: var(--c-primary);
+        box-shadow: 0 4px 15px rgba(16, 185, 129, 0.15);
+        border-color: rgba(16, 185, 129, 0.1);
+    }
+
+    .nav-item i { width: 20px; text-align: center; font-size: 1.1rem; }
+
+    /* --- 5. CONTENT PANEL (Right Side) --- */
+    .content-panel {
+        background: var(--c-surface);
+        border-radius: var(--radius-lg);
+        padding: 40px;
+        box-shadow: var(--shadow-soft);
+        border: 1px solid rgba(0,0,0,0.01);
+        min-height: 500px;
+    }
+
+    .section-title {
+        font-size: 1.5rem;
+        font-weight: 700;
+        margin-bottom: 25px;
+        color: var(--c-text-main);
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding-bottom: 15px;
+        border-bottom: 1px dashed #e2e8f0;
+    }
+
+    /* Form Elements */
+    .form-group { margin-bottom: 25px; }
+    .form-group label {
+        display: block;
+        font-weight: 600;
+        margin-bottom: 10px;
+        color: var(--c-text-main);
+        font-size: 0.95rem;
+    }
+
+    .form-control {
+        width: 100%;
+        padding: 14px 18px;
+        border: 2px solid #f1f5f9;
+        border-radius: 12px;
+        font-family: var(--font-main);
+        font-size: 0.95rem;
+        transition: 0.3s;
+        background: #fdfbf7; /* Very subtle cream input bg */
+    }
+
+    .form-control:focus {
+        border-color: var(--c-primary);
+        outline: none;
+        background: #fff;
+        box-shadow: 0 0 0 4px rgba(16, 185, 129, 0.1);
+    }
+
+    /* Custom Buttons */
+    .btn-action {
+        padding: 14px 28px;
+        border-radius: 12px;
+        font-weight: 700;
+        font-size: 0.95rem;
+        border: none;
+        cursor: pointer;
+        display: inline-flex;
+        align-items: center;
+        gap: 10px;
+        transition: all 0.3s;
+    }
+
+    .btn-primary {
+        background: linear-gradient(135deg, var(--c-primary), var(--c-primary-hover));
+        color: white;
+        box-shadow: 0 4px 15px rgba(16, 185, 129, 0.3);
+    }
+    .btn-primary:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 20px rgba(16, 185, 129, 0.4);
+    }
+
+    .btn-danger {
+        background: #fee2e2;
+        color: var(--c-danger);
+    }
+    .btn-danger:hover {
+        background: var(--c-danger);
+        color: white;
+        transform: translateY(-2px);
+    }
+
+    /* Status Items */
+    .status-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 16px 0;
+        border-bottom: 1px solid #f8fafc;
+    }
+    .status-badge {
+        background: #ecfdf5;
+        color: var(--c-primary);
+        padding: 6px 14px;
+        border-radius: 20px;
+        font-weight: 700;
+        font-size: 0.85rem;
+    }
+
+    /* Animation Classes */
+    .fade-in { animation: fadeIn 0.5s ease-out forwards; }
+    @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(10px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+        .settings-container { grid-template-columns: 1fr; }
+        .nav-panel { display: flex; overflow-x: auto; padding: 10px; gap: 10px; }
+        .nav-item { margin-bottom: 0; white-space: nowrap; }
+    }
+</style>
+
+<canvas id="particles-canvas"></canvas>
+
+<div class="settings-container">
+    
+    <div class="page-header">
+        <h2>Pengaturan Platform</h2>
+        <p>Kelola konfigurasi sistem, model AI, dan keamanan data Anda.</p>
+    </div>
+
+    <div class="nav-panel">
+        <a href="#system" class="nav-item active" onclick="switchTab('system', this)">
+            <i class="fas fa-server"></i>
+            <span>Status Sistem</span>
+        </a>
+        <a href="#data" class="nav-item" onclick="switchTab('data', this)">
+            <i class="fas fa-database"></i>
+            <span>Data Management</span>
+        </a>
+        <a href="#model" class="nav-item" onclick="switchTab('model', this)">
+            <i class="fas fa-brain"></i>
+            <span>Model AI</span>
+        </a>
+        <a href="#security" class="nav-item" onclick="switchTab('security', this)">
+            <i class="fas fa-shield-alt"></i>
+            <span>Keamanan</span>
+        </a>
+    </div>
+
+    <div class="content-panel">
+
+        <div id="tab-system" class="tab-content fade-in">
+            <div class="section-title">
+                <i class="fas fa-heartbeat" style="color: var(--c-primary);"></i>
+                Telemetri Sistem
+            </div>
+            
+            <div class="status-item">
+                <span><i class="fas fa-code-branch" style="margin-right:8px; color:#94a3b8;"></i> Versi Aplikasi</span>
+                <span style="font-weight: 700;">v2.5 <span style="color:var(--c-primary);">Emerald</span></span>
+            </div>
+            <div class="status-item">
+                <span><i class="fas fa-wifi" style="margin-right:8px; color:#94a3b8;"></i> Koneksi API</span>
+                <span class="status-badge" id="api-indicator">Memeriksa...</span>
+            </div>
+
+            <div style="margin-top: 30px; background: #f8fafc; padding: 20px; border-radius: 16px;">
+                <h4 style="font-size: 0.9rem; color: var(--c-text-muted); margin-bottom: 15px;">Monitor Beban Server (Real-time)</h4>
+                <div style="height: 200px;">
+                    <canvas id="systemChart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <div id="tab-data" class="tab-content" style="display: none;">
+            <div class="section-title">
+                <i class="fas fa-hdd" style="color: #f59e0b;"></i>
+                Manajemen Data
+            </div>
+            <p style="color: var(--c-text-muted); margin-bottom: 25px;">
+                Atur siklus hidup data cache dan riwayat prediksi pasien.
+            </p>
+
+            <div class="status-item">
+                <div>
+                    <div style="font-weight:600;">Bersihkan Cache RAM</div>
+                    <small style="color:#94a3b8;">Hapus data sementara agar performa lebih ringan.</small>
+                </div>
+                <button class="btn-action btn-danger" onclick="clearCache()">
+                    <i class="fas fa-broom"></i> Bersihkan
+                </button>
+            </div>
+
+            <div class="status-item" style="border-bottom: none; margin-top: 10px;">
+                <div>
+                    <div style="font-weight:600; color:var(--c-danger);">Reset Factory Data</div>
+                    <small style="color:#94a3b8;">Menghapus permanen seluruh riwayat prediksi.</small>
+                </div>
+                <button class="btn-action btn-danger" style="background:var(--c-danger); color:white;" onclick="resetHistory()">
+                    <i class="fas fa-trash-alt"></i> Hapus Semua
+                </button>
+            </div>
+        </div>
+
+        <div id="tab-model" class="tab-content" style="display: none;">
+            <div class="section-title">
+                <i class="fas fa-microchip" style="color: var(--c-primary);"></i>
+                Konfigurasi Model
+            </div>
+
+            <div class="form-group">
+                <label>Algoritma Utama</label>
+                <select class="form-control">
+                    <option value="RF">Random Forest (Recommended)</option>
+                    <option value="GB">Gradient Boosting</option>
+                    <option value="SVM">Support Vector Machine</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label>Sensitivity Threshold (0.1 - 1.0)</label>
+                <input type="range" class="form-control" min="0.1" max="1.0" step="0.1" value="0.8" style="padding: 0; border:none; background: transparent;">
+                <div style="display:flex; justify-content:space-between; color:var(--c-text-muted); font-size:0.8rem; margin-top:5px;">
+                    <span>Liberal</span>
+                    <span>Strict (0.8)</span>
+                </div>
+            </div>
+
+            <div style="text-align: right; margin-top: 30px;">
+                <button class="btn-action btn-primary" onclick="saveConfig()">
+                    <i class="fas fa-save"></i> Simpan Perubahan
+                </button>
+            </div>
+        </div>
+
+        <div id="tab-security" class="tab-content" style="display: none;">
+            <div class="section-title">
+                <i class="fas fa-lock" style="color: var(--c-text-main);"></i>
+                Audit & Keamanan
+            </div>
+            
+            <div class="status-item">
+                <span>Enkripsi Data (AES-256)</span>
+                <span class="status-badge"><i class="fas fa-check"></i> Aktif</span>
+            </div>
+            <div class="status-item">
+                <span>Autentikasi 2-Faktor (2FA)</span>
+                <span class="status-badge" style="background:#fee2e2; color:var(--c-danger);">Nonaktif</span>
+            </div>
+            <div class="status-item" style="border:none;">
+                <span>Log Aktivitas Admin</span>
+                <button class="btn-action btn-primary" style="padding: 8px 16px; font-size: 0.85rem;">
+                    Unduh Log
+                </button>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<script>
+// --- 1. INTERACTION LOGIC ---
+function switchTab(tabId, element) {
+    // 1. Handle Nav Styling
+    document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
+    element.classList.add('active');
+
+    // 2. Handle Content Switching with Animation
+    document.querySelectorAll('.tab-content').forEach(content => {
+        content.style.display = 'none';
+        content.classList.remove('fade-in');
+    });
+
+    const activeContent = document.getElementById('tab-' + tabId);
+    activeContent.style.display = 'block';
+    
+    // Trigger Reflow to restart animation
+    void activeContent.offsetWidth; 
+    activeContent.classList.add('fade-in');
+}
+
+// --- 2. PARTICLE BACKGROUND (Cream & Emerald Theme) ---
+const canvas = document.getElementById('particles-canvas');
+const ctx = canvas.getContext('2d');
+let particlesArray;
+
+canvas.width = window.innerWidth;
+canvas.height = window.innerHeight;
+
+class Particle {
+    constructor() {
+        this.x = Math.random() * canvas.width;
+        this.y = Math.random() * canvas.height;
+        this.size = Math.random() * 3 + 1;
+        this.speedX = (Math.random() * 1) - 0.5; // Slow peaceful movement
+        this.speedY = (Math.random() * 1) - 0.5;
+        // Colors: Emerald Green & Soft Gold
+        this.color = Math.random() > 0.5 ? 'rgba(16, 185, 129, 0.2)' : 'rgba(245, 158, 11, 0.15)'; 
+    }
+    update() {
+        this.x += this.speedX;
+        this.y += this.speedY;
+        if (this.x > canvas.width || this.x < 0) this.speedX = -this.speedX;
+        if (this.y > canvas.height || this.y < 0) this.speedY = -this.speedY;
+    }
+    draw() {
+        ctx.fillStyle = this.color;
+        ctx.beginPath();
+        ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+        ctx.fill();
+    }
+}
+
+function initParticles() {
+    particlesArray = [];
+    for (let i = 0; i < 50; i++) {
+        particlesArray.push(new Particle());
+    }
+}
+
+function animateParticles() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    for (let i = 0; i < particlesArray.length; i++) {
+        particlesArray[i].update();
+        particlesArray[i].draw();
+    }
+    requestAnimationFrame(animateParticles);
+}
+
+window.addEventListener('resize', () => {
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+    initParticles();
+});
+
+initParticles();
+animateParticles();
+
+// --- 3. CHART.JS (System Monitor) ---
+const chartCtx = document.getElementById('systemChart').getContext('2d');
+const systemChart = new Chart(chartCtx, {
+    type: 'line',
+    data: {
+        labels: ['10s', '8s', '6s', '4s', '2s', 'Now'],
+        datasets: [{
+            label: 'CPU Load',
+            data: [12, 19, 15, 25, 22, 18],
+            borderColor: '#10b981', // Emerald
+            backgroundColor: 'rgba(16, 185, 129, 0.05)',
+            borderWidth: 2,
+            tension: 0.4, // Smooth curve
+            fill: true
+        }]
+    },
+    options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: { legend: { display: false } },
+        scales: {
+            y: { beginAtZero: true, grid: { color: '#f1f5f9' } },
+            x: { grid: { display: false } }
+        }
+    }
+});
+
+// --- 4. ACTION MOCKUPS ---
+function clearCache() {
+    Swal.fire({
+        title: 'Bersihkan Cache?',
+        text: "Sistem akan terasa lebih ringan, namun data sementara akan hilang.",
+        icon: 'question',
+        showCancelButton: true,
+        confirmButtonColor: '#10b981',
+        cancelButtonColor: '#94a3b8',
+        confirmButtonText: 'Ya, Bersihkan!'
+    }).then((result) => {
+        if (result.isConfirmed) {
+            Swal.fire('Berhasil!', 'Cache sistem telah dibersihkan.', 'success');
+        }
+    });
+}
+
+function resetHistory() {
+    Swal.fire({
+        title: 'Hapus Permanen?',
+        text: "Tindakan ini tidak bisa dibatalkan!",
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#ef4444',
+        cancelButtonColor: '#94a3b8',
+        confirmButtonText: 'Ya, Hapus Semua'
+    }).then((result) => {
+        if (result.isConfirmed) {
+            Swal.fire('Terhapus!', 'Database telah di-reset.', 'success');
+        }
+    });
+}
+
+function saveConfig() {
+    const btn = document.querySelector('.btn-primary');
+    const originalText = btn.innerHTML;
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Menyimpan...';
+    
+    setTimeout(() => {
+        btn.innerHTML = originalText;
+        Swal.fire({
+            icon: 'success',
+            title: 'Tersimpan',
+            text: 'Konfigurasi model berhasil diperbarui.',
+            timer: 1500,
+            showConfirmButton: false
+        });
+    }, 1000);
+}
+
+// Simulasi API Check
+setTimeout(() => {
+    document.getElementById('api-indicator').innerHTML = '<i class="fas fa-check-circle"></i> Terhubung';
+}, 1500);
+
+</script>
+{% endblock %}

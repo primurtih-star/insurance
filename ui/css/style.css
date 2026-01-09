@@ -1,0 +1,467 @@
+/* ================================
+   style.css
+   High-level component styles, tokens, interactive states, charts, dashboards
+   ----------------------------------------------
+   Integrates with theme files and index.css
+   ================================= */
+
+/* ----------------------------------------
+   Import guard: if variables not set, provide defaults
+   ---------------------------------------- */
+:root {
+  --brand-primary: #4c82ff;
+  --brand-success: #3eb87b;
+  --brand-warning: #e9a63a;
+  --brand-danger:  #e05252;
+
+  --muted: #7a8594;
+  --glass: rgba(255,255,255,0.06);
+}
+
+/* ----------------------------------------
+   Header / topbar
+   ---------------------------------------- */
+.header {
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  padding: 14px 24px;
+  background: linear-gradient(180deg, rgba(0,0,0,0.02), transparent);
+  border-bottom: 1px solid rgba(0,0,0,0.04);
+  position: sticky;
+  top: 0;
+  z-index: var(--z-dropdown, 900);
+}
+.header .brand { display:flex; align-items:center; gap:12px; text-decoration:none; color: inherit; }
+.header .brand .logo { width:38px; height:38px; border-radius:8px; background: var(--brand-primary); display:inline-block; }
+
+/* ----------------------------------------
+   Sidebar
+   ---------------------------------------- */
+.sidebar {
+  width: 260px;
+  min-width: 220px;
+  background: var(--sidebar-bg, #fff);
+  border-right: 1px solid rgba(0,0,0,0.04);
+  padding: 16px;
+  height: 100vh;
+  overflow: auto;
+}
+.sidebar .section-title { font-size: var(--font-sm); color: var(--muted); margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.08em; }
+.sidebar .menu { list-style:none; padding:0; margin:0; }
+.sidebar .menu-item {
+  display:flex;
+  align-items:center;
+  gap:12px;
+  padding: 10px 12px;
+  border-radius: 8px;
+  color: inherit;
+  text-decoration: none;
+}
+.sidebar .menu-item:hover { background: rgba(0,0,0,0.03); }
+
+/* ----------------------------------------
+   Breadcrumb
+   ---------------------------------------- */
+.breadcrumb { font-size: var(--font-sm); color: var(--muted); display:flex; gap:8px; align-items:center; }
+.breadcrumb a { color: inherit; text-decoration: none; }
+.breadcrumb .sep { color: rgba(0,0,0,0.18); }
+
+/* ----------------------------------------
+   Search input with result dropdown
+   ---------------------------------------- */
+.search {
+  position: relative;
+  width: 360px;
+  max-width: 100%;
+}
+.search .input { padding-right: 40px; }
+.search .icon { position: absolute; right: 12px; top: 50%; transform: translateY(-50%); pointer-events: none; color: var(--muted); }
+.search .results {
+  position: absolute;
+  top: calc(100% + 8px);
+  left: 0;
+  right: 0;
+  background: var(--card-bg, #fff);
+  border: 1px solid rgba(0,0,0,0.06);
+  border-radius: 8px;
+  box-shadow: 0 8px 24px rgba(20,20,40,0.06);
+  max-height: 320px;
+  overflow: auto;
+  z-index: var(--z-dropdown, 900);
+}
+
+/* ----------------------------------------
+   Tooltips
+   ---------------------------------------- */
+.tooltip {
+  position: absolute;
+  background: rgba(0,0,0,0.8);
+  color: white;
+  padding: 6px 10px;
+  border-radius: 6px;
+  font-size: 12px;
+  z-index: var(--z-tooltip, 1100);
+  pointer-events: none;
+}
+
+/* ----------------------------------------
+   Forms advanced components
+   ---------------------------------------- */
+.input-group { display:flex; gap:8px; align-items:center; }
+.input-group .prefix { background: rgba(0,0,0,0.03); padding: 10px 12px; border-radius: 8px 0 0 8px; border-right: 1px solid rgba(0,0,0,0.06); }
+.input-group .suffix { background: rgba(0,0,0,0.03); padding: 10px 12px; border-radius: 0 8px 8px 0; border-left: 1px solid rgba(0,0,0,0.06); }
+
+/* ----------------------------------------
+   Toggle / switch
+   ---------------------------------------- */
+.switch {
+  display:inline-flex;
+  align-items:center;
+  gap:8px;
+}
+.switch .track {
+  width:44px; height:26px; background: rgba(0,0,0,0.06); border-radius: 999px; position: relative; transition: background 200ms;
+}
+.switch .thumb {
+  width:20px; height:20px; background:white; border-radius:50%; position:absolute; top:3px; left:3px; transition: transform 220ms cubic-bezier(.2,.9,.3,1);
+  box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+}
+.switch input:checked + .track { background: var(--brand-primary); }
+.switch input:checked + .track .thumb { transform: translateX(18px); }
+
+/* ----------------------------------------
+   Tabs
+   ---------------------------------------- */
+.tabs { display:flex; gap:8px; border-bottom: 1px solid rgba(0,0,0,0.06); padding-bottom: 6px; }
+.tab { padding: 8px 12px; cursor: pointer; border-radius: 8px 8px 0 0; }
+.tab.is-active { background: linear-gradient(180deg, rgba(0,0,0,0.02), transparent); border-bottom: 2px solid var(--brand-primary); }
+
+/* ----------------------------------------
+   Tooltip & popover placement helpers
+   ---------------------------------------- */
+.popover { max-width: 320px; background: var(--card-bg, #fff); border: 1px solid rgba(0,0,0,0.06); border-radius: 8px; padding: 12px; box-shadow: 0 8px 24px rgba(0,0,0,0.06); }
+
+/* ----------------------------------------
+   Notifications & toast
+   ---------------------------------------- */
+.toaster { position: fixed; right: 18px; top: 18px; display:flex; flex-direction:column; gap: 8px; z-index: var(--z-toast, 1000); }
+.toast {
+  min-width: 220px;
+  padding: 12px 14px;
+  border-radius: 8px;
+  display:flex;
+  gap: 10px;
+  align-items: center;
+  box-shadow: 0 8px 26px rgba(0,0,0,0.08);
+}
+
+/* ----------------------------------------
+   Table extended styles: sortable, compact
+   ---------------------------------------- */
+.table.sortable thead th { cursor: pointer; user-select: none; position: relative; }
+.table.sortable thead th .sort-indicator { position: absolute; right: 10px; top: 50%; transform: translateY(-50%); opacity: 0.6; }
+.table.compact th, .table.compact td { padding: 8px 10px; font-size: 13px; }
+
+/* ----------------------------------------
+   Empty / placeholder states
+   ---------------------------------------- */
+.empty-state {
+  text-align: center;
+  padding: 32px;
+  color: var(--muted);
+}
+.empty-state .illustration { width: 160px; height: 120px; margin: 0 auto 12px; opacity: 0.9; }
+
+/* ----------------------------------------
+   Modal styles
+   ---------------------------------------- */
+.modal-overlay {
+  position: fixed; inset: 0; display:flex; align-items:center; justify-content:center;
+  background: rgba(10,10,12,0.45); z-index: var(--z-modal, 950);
+}
+.modal-window {
+  width: 720px; max-width: 96%; border-radius: 12px; padding: 18px; background: var(--card-bg, #fff); box-shadow: 0 14px 40px rgba(16,24,40,0.16);
+}
+
+/* ----------------------------------------
+   Complex components: data card, KPI, mini charts
+   ---------------------------------------- */
+.kpi {
+  display:flex;
+  align-items:center;
+  gap: 12px;
+  padding: 14px;
+  border-radius: 12px;
+  background: linear-gradient(180deg, rgba(255,255,255,0.02), transparent);
+  border: 1px solid rgba(0,0,0,0.04);
+}
+.kpi .value { font-size: 20px; font-weight: 700; }
+.kpi .label { font-size: 13px; color: var(--muted); }
+
+/* sparkline wrapper */
+.sparkline {
+  width: 160px;
+  height: 36px;
+  display:block;
+}
+
+/* ----------------------------------------
+   Chart legend & badges
+   ---------------------------------------- */
+.legend {
+  display:flex;
+  gap: 12px;
+  align-items:center;
+  flex-wrap:wrap;
+}
+.legend .item { display:flex; gap:8px; align-items:center; font-size: 13px; color: var(--muted); }
+.legend .swatch { width: 12px; height: 12px; border-radius: 3px; }
+
+/* ----------------------------------------
+   Drilldown panels, side sheets
+   ---------------------------------------- */
+.side-sheet {
+  width: 420px;
+  max-width: 95%;
+  background: var(--card-bg, #fff);
+  border-left: 1px solid rgba(0,0,0,0.04);
+  position: fixed;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  box-shadow: -12px 0 40px rgba(16,24,40,0.08);
+  padding: 16px;
+  transform: translateX(100%);
+  transition: transform 320ms cubic-bezier(.2,.9,.3,1);
+}
+.side-sheet.open { transform: translateX(0%); }
+
+/* ----------------------------------------
+   File uploader (drag & drop)
+   ---------------------------------------- */
+.dropzone {
+  border: 2px dashed rgba(0,0,0,0.06);
+  padding: 20px;
+  border-radius: 10px;
+  text-align: center;
+}
+.dropzone.dragover { background: rgba(76,130,255,0.04); border-color: rgba(76,130,255,0.22); }
+
+/* ----------------------------------------
+   Complex forms: fieldset groups & help text
+   ---------------------------------------- */
+.fieldset {
+  border-radius: 10px;
+  border: 1px solid rgba(0,0,0,0.06);
+  padding: 12px;
+  margin-bottom: 12px;
+  background: linear-gradient(180deg, rgba(255,255,255,0.02), transparent);
+}
+.fieldset .help { font-size: 13px; color: var(--muted); margin-top: 6px; }
+
+/* ----------------------------------------
+   Multi-select & token chips
+   ---------------------------------------- */
+.chips { display:flex; gap:8px; flex-wrap:wrap; }
+.chip {
+  padding: 6px 10px; border-radius: 999px; background: rgba(0,0,0,0.04); display:inline-flex; gap:8px; align-items:center; font-weight:600;
+}
+.chip .remove { cursor:pointer; opacity:0.7; }
+
+/* ----------------------------------------
+   Code block & docs styles
+   ---------------------------------------- */
+.docs {
+  background: linear-gradient(180deg, rgba(0,0,0,0.01), transparent);
+  padding: 18px;
+  border-radius: 12px;
+  border: 1px solid rgba(0,0,0,0.04);
+}
+pre.code {
+  background: #0b1220;
+  color: #cfe8ff;
+  padding: 14px;
+  border-radius: 8px;
+  overflow: auto;
+}
+.code-inline { background: rgba(0,0,0,0.06); padding: 4px 6px; border-radius: 4px; font-family: monospace; }
+
+/* ----------------------------------------
+   Status indicators & live dot
+   ---------------------------------------- */
+.status {
+  display:inline-flex; gap:8px; align-items:center;
+}
+.status .dot {
+  width:10px; height:10px; border-radius:50%;
+  box-shadow: 0 0 0 3px rgba(0,0,0,0.04);
+}
+.status.online .dot { background: #3dd68c; }
+.status.offline .dot { background: #e05252; }
+
+/* ----------------------------------------
+   Inline editable text (contenteditable)
+   ---------------------------------------- */
+.editable {
+  padding: 6px;
+  border-radius: 6px;
+  min-height: 32px;
+  border: 1px dashed transparent;
+}
+.editable:focus { border-color: rgba(76,130,255,0.35); box-shadow: 0 10px 30px rgba(76,130,255,0.06); }
+
+/* ----------------------------------------
+   Responsive helpers beyond index.css
+   ---------------------------------------- */
+@media (max-width: 960px) {
+  .sidebar { display:none; }
+  .header .search { display: none; }
+  .kpi { flex-direction: column; align-items: flex-start; gap: 6px; }
+}
+@media (max-width: 520px) {
+  .header { padding: 10px 14px; }
+  .modal-window { width: 92%; }
+}
+
+/* ----------------------------------------
+   Accessibility: color contrast adjustments (ARIA states)
+   ---------------------------------------- */
+[aria-disabled="true"] { opacity: 0.5; pointer-events: none; }
+[aria-hidden="true"] { display: none !important; }
+
+/* ----------------------------------------
+   Print fallback (in case print_pdf not loaded)
+   ---------------------------------------- */
+@media print {
+  .no-print { display: none !important; }
+  .card { border: none !important; box-shadow: none !important; }
+}
+
+/* ----------------------------------------
+   Deep component: data table (interactive)
+   ---------------------------------------- */
+.data-table {
+  width: 100%;
+  border-collapse: collapse;
+  background: transparent;
+  font-size: 14px;
+}
+.data-table thead th {
+  text-align: left;
+  font-size: 13px;
+  padding: 10px;
+  border-bottom: 1px solid rgba(0,0,0,0.06);
+  color: var(--muted);
+}
+.data-table tbody td {
+  padding: 12px 10px;
+  border-bottom: 1px solid rgba(0,0,0,0.04);
+}
+.data-table tbody tr:hover { background: rgba(0,0,0,0.02); }
+
+/* Row selection */
+.data-table tbody tr.is-selected { background: linear-gradient(90deg, rgba(76,130,255,0.06), transparent); border-left: 4px solid var(--brand-primary); }
+
+/* Sticky headers */
+.data-table thead th.sticky { position: sticky; top: 0; background: var(--card-bg, #fff); z-index: 10; }
+
+/* ----------------------------------------
+   Export buttons & CSV helpers
+   ---------------------------------------- */
+.export-controls { display:flex; gap:8px; align-items:center; }
+
+/* ----------------------------------------
+   Complex: canvas charts placeholder (responsive)
+   ---------------------------------------- */
+.canvas-wrapper { position:relative; width:100%; height: 320px; }
+.canvas-wrapper .canvas { width:100%; height:100%; display:block; }
+
+/* ----------------------------------------
+   Advanced: timeline / activity feed
+   ---------------------------------------- */
+.timeline { display:flex; flex-direction:column; gap:16px; }
+.timeline .event { display:flex; gap:12px; align-items:flex-start; }
+.timeline .event .marker { width:10px; height:10px; border-radius:50%; margin-top:6px; background: var(--brand-primary); }
+
+/* ----------------------------------------
+   Help: long scroll anchor and jump-to
+   ---------------------------------------- */
+.anchor-target { scroll-margin-top: 88px; }
+
+/* ----------------------------------------
+   Footer
+   ---------------------------------------- */
+.footer {
+  padding: 20px;
+  color: var(--muted);
+  font-size: 13px;
+  text-align: center;
+  border-top: 1px solid rgba(0,0,0,0.04);
+}
+
+/* ----------------------------------------
+   Theme-aware variants (prefers-color-scheme)
+   ---------------------------------------- */
+@media (prefers-color-scheme: dark) {
+  :root {
+    --card-bg: #121217;
+    --muted: #b6b9c4;
+  }
+  .header { background: linear-gradient(180deg, rgba(255,255,255,0.02), transparent); }
+}
+
+/* ----------------------------------------
+   Large component: workflow kanban board
+   ---------------------------------------- */
+.kanban {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 12px;
+}
+.kanban .lane { background: var(--card-bg, #fff); padding: 12px; border-radius: 10px; min-height: 160px; }
+.kanban .card { margin-bottom: 10px; }
+
+/* Drag placeholder */
+.drag-placeholder { border: 2px dashed rgba(0,0,0,0.06); padding: 12px; border-radius: 8px; }
+
+/* ----------------------------------------
+   Tiny helpers for microcopy & badges in-line
+   ---------------------------------------- */
+.meta { font-size: 12px; color: var(--muted); }
+.inline-badge { display:inline-block; padding: 4px 8px; border-radius: 999px; background: rgba(0,0,0,0.04); font-size: 12px; }
+
+/* ----------------------------------------
+   Final: utilities for theme switching (JS toggles root classes)
+   ---------------------------------------- */
+.theme-light { /* variables from theme_light.css usually override */ }
+.theme-dark { /* variables from theme_dark.css usually override */ }
+.theme-emerald { /* variables from theme_emerald.css usually override */ }
+
+/* ----------------------------------------
+   Very long list of color utility helpers (semantic)
+   This block purposely comprehensive to help docs, each line is a real class
+   ---------------------------------------- */
+.bg-primary { background-color: var(--brand-primary) !important; color: white !important; }
+.bg-success { background-color: var(--brand-success) !important; color: white !important; }
+.bg-warning { background-color: var(--brand-warning) !important; color: white !important; }
+.bg-danger  { background-color: var(--brand-danger) !important; color: white !important; }
+
+.text-primary { color: var(--brand-primary) !important; }
+.text-success { color: var(--brand-success) !important; }
+.text-warning { color: var(--brand-warning) !important; }
+.text-danger  { color: var(--brand-danger) !important; }
+
+/* border utilities */
+.b-none { border: none !important; }
+.b-light { border: 1px solid rgba(0,0,0,0.04) !important; }
+.b-strong { border: 1px solid rgba(0,0,0,0.12) !important; }
+
+/* display helpers */
+.d-block { display:block !important; }
+.d-inline { display:inline !important; }
+.d-flex { display:flex !important; }
+
+/* ----------------------------------------
+   End of style.css
+   ================================= */

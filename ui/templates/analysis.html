@@ -1,0 +1,393 @@
+{% extends "layout.html" %}
+{% block content %}
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/countup.js/1.9.3/countUp.min.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+<style>
+    :root {
+        --font-main: 'Plus Jakarta Sans', sans-serif;
+        --primary: #059669; --primary-light: #34d399;
+        --accent: #3b82f6;
+        --text-dark: #1e293b; --text-muted: #64748b;
+        --glass-bg: rgba(255, 255, 255, 0.7);
+        --glass-border: rgba(255, 255, 255, 0.8);
+        --card-shadow: 0 10px 30px -10px rgba(0,0,0,0.08);
+    }
+
+    body { font-family: var(--font-main); }
+
+    .analysis-container {
+        max-width: 1200px; margin: 0 auto; padding: 40px 20px;
+    }
+
+    /* --- 1. HERO SECTION (Gradient Card) --- */
+    .hero-card {
+        background: linear-gradient(135deg, var(--primary) 0%, #0d9488 100%);
+        border-radius: 24px; padding: 40px; color: white;
+        position: relative; overflow: hidden;
+        box-shadow: 0 20px 40px -10px rgba(16, 185, 129, 0.3);
+        margin-bottom: 30px; display: flex; justify-content: space-between; align-items: center;
+    }
+
+    /* Decorative Circles */
+    .hero-bg-shape {
+        position: absolute; border-radius: 50%; background: rgba(255,255,255,0.1); filter: blur(40px);
+    }
+    .shape-1 { width: 300px; height: 300px; top: -100px; left: -50px; }
+    .shape-2 { width: 200px; height: 200px; bottom: -50px; right: -20px; }
+
+    .hero-content { position: relative; z-index: 2; max-width: 600px; }
+    .hero-title { font-size: 2rem; font-weight: 800; margin-bottom: 10px; line-height: 1.2; }
+    .hero-desc { font-size: 1rem; opacity: 0.9; line-height: 1.6; }
+
+    /* System Status Badge */
+    .system-status {
+        position: relative; z-index: 2;
+        background: rgba(255,255,255,0.15); backdrop-filter: blur(10px);
+        padding: 10px 20px; border-radius: 16px; border: 1px solid rgba(255,255,255,0.3);
+        display: flex; flex-direction: column; align-items: flex-end;
+    }
+    .status-badge { 
+        display: flex; align-items: center; gap: 8px; font-weight: 700; font-size: 0.9rem; 
+        background: rgba(16, 185, 129, 0.2); padding: 5px 12px; border-radius: 20px; margin-bottom: 5px;
+    }
+    .pulse-dot {
+        width: 8px; height: 8px; background: #4ade80; border-radius: 50%;
+        box-shadow: 0 0 10px #4ade80; animation: pulse 2s infinite;
+    }
+    @keyframes pulse { 0% { opacity: 1; transform: scale(1); } 50% { opacity: 0.5; transform: scale(1.2); } 100% { opacity: 1; transform: scale(1); } }
+
+    /* --- 2. METRICS GRID --- */
+    .metrics-grid {
+        display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+        gap: 20px; margin-bottom: 30px;
+    }
+    .metric-card {
+        background: var(--glass-bg); backdrop-filter: blur(10px);
+        border: 1px solid white; border-radius: 20px; padding: 25px;
+        display: flex; align-items: center; gap: 20px;
+        box-shadow: var(--card-shadow); transition: 0.3s;
+    }
+    .metric-card:hover { transform: translateY(-5px); background: white; }
+
+    .m-icon { 
+        width: 50px; height: 50px; border-radius: 14px; 
+        display: flex; align-items: center; justify-content: center; font-size: 1.4rem; 
+    }
+    .m-info h3 { font-size: 0.85rem; color: var(--text-muted); margin: 0 0 5px 0; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; }
+    .m-info p { font-size: 1.6rem; color: var(--text-dark); margin: 0; font-weight: 800; }
+
+    /* --- 3. SPLIT SECTION (Chart & Actions) --- */
+    .dashboard-split {
+        display: grid; grid-template-columns: 2.2fr 1fr; gap: 25px;
+    }
+
+    /* Chart Panel */
+    .chart-panel {
+        background: white; border-radius: 24px; padding: 30px;
+        box-shadow: var(--card-shadow); border: 1px solid #f1f5f9;
+        display: flex; flex-direction: column; min-height: 400px;
+    }
+    .panel-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+    .panel-title { font-size: 1.1rem; font-weight: 700; color: var(--text-dark); display: flex; align-items: center; gap: 10px; }
+    .chart-select { border: 1px solid #e2e8f0; padding: 6px 12px; border-radius: 8px; font-size: 0.85rem; color: var(--text-muted); outline: none; }
+
+    /* Right Sidebar (Actions & Feed) */
+    .sidebar { display: flex; flex-direction: column; gap: 25px; }
+
+    /* Quick Actions List */
+    .action-list { display: flex; flex-direction: column; gap: 12px; }
+    .action-item {
+        background: white; border: 1px solid #f1f5f9; border-radius: 16px; padding: 15px;
+        display: flex; align-items: center; gap: 15px; text-decoration: none;
+        transition: 0.2s; box-shadow: 0 4px 10px rgba(0,0,0,0.02);
+    }
+    .action-item:hover { transform: translateX(5px); border-color: var(--primary); box-shadow: 0 10px 20px rgba(16, 185, 129, 0.1); }
+    
+    .ai-icon { 
+        width: 40px; height: 40px; border-radius: 10px; 
+        display: flex; align-items: center; justify-content: center; font-size: 1.1rem; 
+        transition: 0.3s;
+    }
+    .action-item:hover .ai-icon { transform: rotate(10deg) scale(1.1); }
+    
+    .ai-text h4 { margin: 0; font-size: 0.95rem; font-weight: 700; color: var(--text-dark); }
+    .ai-text span { font-size: 0.75rem; color: var(--text-muted); }
+
+    /* Feed Widget */
+    .feed-widget { background: white; border-radius: 20px; padding: 20px; border: 1px solid #f1f5f9; }
+    .feed-title { font-size: 0.9rem; font-weight: 700; color: var(--text-dark); margin-bottom: 15px; display: flex; justify-content: space-between; }
+    
+    .feed-item {
+        display: flex; align-items: center; gap: 12px; padding: 12px 0; border-bottom: 1px dashed #f1f5f9;
+    }
+    .feed-item:last-child { border-bottom: none; padding-bottom: 0; }
+    .feed-avatar { 
+        width: 35px; height: 35px; background: #f0fdf4; color: var(--primary); 
+        border-radius: 8px; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 0.8rem;
+    }
+    .feed-info div { font-size: 0.85rem; font-weight: 600; color: var(--text-dark); }
+    .feed-info span { font-size: 0.7rem; color: var(--text-muted); }
+    .feed-price { margin-left: auto; font-size: 0.85rem; font-weight: 700; color: var(--primary); }
+
+    /* Animation */
+    .fade-in-up { opacity: 0; animation: fadeInUp 0.8s forwards; }
+    @keyframes fadeInUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+
+    /* Responsive */
+    @media (max-width: 900px) {
+        .dashboard-split { grid-template-columns: 1fr; }
+        .hero-card { flex-direction: column; align-items: flex-start; gap: 20px; }
+        .system-status { align-items: flex-start; width: 100%; }
+    }
+</style>
+
+<div class="analysis-container">
+
+    <div class="hero-card fade-in-up">
+        <div class="hero-bg-shape shape-1"></div>
+        <div class="hero-bg-shape shape-2"></div>
+        
+        <div class="hero-content">
+            <h1 class="hero-title">Analytics Hub</h1>
+            <p class="hero-desc">
+                Selamat datang kembali. Sistem AI siap untuk analisis risiko dan prediksi biaya asuransi secara real-time.
+            </p>
+        </div>
+
+        <div class="system-status">
+            <div class="status-badge">
+                <span class="pulse-dot"></span> SYSTEM OPTIMAL
+            </div>
+            <div style="font-family: monospace; font-size: 0.8rem; opacity: 0.8;">
+                Latency: 24ms | v2.1.0
+            </div>
+        </div>
+    </div>
+
+    <div class="metrics-grid fade-in-up" style="animation-delay: 0.1s;">
+        <div class="metric-card">
+            <div class="m-icon" style="background: #ecfdf5; color: var(--primary);">
+                <i class="fas fa-brain"></i>
+            </div>
+            <div class="m-info">
+                <h3>Total Prediksi</h3>
+                <p>1,248</p>
+            </div>
+        </div>
+
+        <div class="metric-card">
+            <div class="m-icon" style="background: #eff6ff; color: var(--accent);">
+                <i class="fas fa-dollar-sign"></i>
+            </div>
+            <div class="m-info">
+                <h3>Avg. Premi</h3>
+                <p>$5,400</p>
+            </div>
+        </div>
+
+        <div class="metric-card">
+            <div class="m-icon" style="background: #fef2f2; color: #ef4444;">
+                <i class="fas fa-exclamation-triangle"></i>
+            </div>
+            <div class="m-info">
+                <h3>High Risk</h3>
+                <p>142</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="dashboard-split fade-in-up" style="animation-delay: 0.2s;">
+        
+        <div class="chart-panel">
+            <div class="panel-head">
+                <div class="panel-title">
+                    <i class="fas fa-chart-area" style="color: var(--primary);"></i>
+                    Cost Prediction Trend
+                </div>
+                <select class="chart-select">
+                    <option>7 Hari Terakhir</option>
+                    <option>Bulan Ini</option>
+                </select>
+            </div>
+            <div style="flex: 1; position: relative;">
+                <canvas id="mainChart"></canvas>
+            </div>
+        </div>
+
+        <div class="sidebar">
+            
+            <div class="action-list">
+                <h3 style="font-size: 0.9rem; font-weight: 700; color: #94a3b8; margin: 0 0 5px 0; text-transform: uppercase;">Quick Actions</h3>
+                
+                <a href="{{ url_for('main.prediction_form') }}" class="action-item">
+                    <div class="ai-icon" style="background: #ecfdf5; color: var(--primary);">
+                        <i class="fas fa-magic"></i>
+                    </div>
+                    <div class="ai-text">
+                        <h4>New Prediction</h4>
+                        <span>Input data pasien baru</span>
+                    </div>
+                </a>
+
+                <a href="{{ url_for('main.dataset') }}" class="action-item">
+                    <div class="ai-icon" style="background: #eff6ff; color: var(--accent);">
+                        <i class="fas fa-database"></i>
+                    </div>
+                    <div class="ai-text">
+                        <h4>Dataset Manager</h4>
+                        <span>Kelola data latih</span>
+                    </div>
+                </a>
+
+                <a href="/model-arena" class="action-item">
+                    <div class="ai-icon" style="background: #f3e8ff; color: #a855f7;">
+                        <i class="fas fa-trophy"></i>
+                    </div>
+                    <div class="ai-text">
+                        <h4>Model Arena</h4>
+                        <span>Komparasi Akurasi</span>
+                    </div>
+                </a>
+            </div>
+
+            <div class="feed-widget">
+                <div class="feed-title">
+                    Recent Activity 
+                    <a href="/history" style="color: var(--accent); text-decoration: none; font-size: 0.8rem;">View All</a>
+                </div>
+                <div id="feedList">
+                    <div style="text-align: center; color: #cbd5e1; font-size: 0.85rem; padding: 20px;">
+                        <i class="fas fa-circle-notch fa-spin"></i> Syncing...
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+</div>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+        
+        // --- 1. INITIALIZE CHART (Visual Cantik) ---
+        const ctx = document.getElementById('mainChart').getContext('2d');
+        
+        // Create Gradient
+        let gradient = ctx.createLinearGradient(0, 0, 0, 400);
+        gradient.addColorStop(0, 'rgba(16, 185, 129, 0.25)'); // Primary color transparant
+        gradient.addColorStop(1, 'rgba(16, 185, 129, 0)');
+
+        const mainChart = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
+                datasets: [{
+                    label: 'Predicted Cost',
+                    data: [12000, 15000, 11000, 18000, 22000, 19000, 24000], // Dummy Data awal
+                    borderColor: '#059669', // Emerald 600
+                    backgroundColor: gradient,
+                    borderWidth: 3,
+                    pointBackgroundColor: '#fff',
+                    pointBorderColor: '#059669',
+                    pointRadius: 4,
+                    pointHoverRadius: 6,
+                    fill: true,
+                    tension: 0.4 // Smooth curve
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { display: false },
+                    tooltip: {
+                        backgroundColor: '#fff',
+                        titleColor: '#1e293b',
+                        bodyColor: '#059669',
+                        borderColor: '#e2e8f0',
+                        borderWidth: 1,
+                        padding: 10,
+                        displayColors: false,
+                        callbacks: {
+                            label: function(context) { return '$ ' + context.parsed.y.toLocaleString(); }
+                        }
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        grid: { color: '#f1f5f9', borderDash: [5, 5] },
+                        ticks: { color: '#94a3b8', font: {family: "'Plus Jakarta Sans', sans-serif"} }
+                    },
+                    x: {
+                        grid: { display: false },
+                        ticks: { color: '#94a3b8', font: {family: "'Plus Jakarta Sans', sans-serif"} }
+                    }
+                }
+            }
+        });
+
+        // --- 2. LOAD RECENT ACTIVITY (Real Data) ---
+        loadRecentFeed();
+    });
+
+    async function loadRecentFeed() {
+        const container = document.getElementById('feedList');
+        try {
+            // Fetch dari API Flask
+            const res = await fetch('/api/predict/history');
+            const data = await res.json();
+            
+            container.innerHTML = ''; 
+
+            if (!data || data.length === 0) {
+                container.innerHTML = '<div style="text-align: center; color: #94a3b8; padding: 10px; font-size:0.8rem;">Belum ada data history.</div>';
+                return;
+            }
+
+            // Ambil 4 data terakhir
+            const recent = data.slice(-4).reverse();
+
+            recent.forEach(item => {
+                const price = new Intl.NumberFormat('en-US', {style:'currency', currency:'USD', maximumFractionDigits:0}).format(item.prediction);
+                const name = item.name || 'Anonymous';
+                const initials = name.substring(0, 2).toUpperCase();
+                const time = item.timestamp || 'Just now';
+
+                const html = `
+                <div class="feed-item">
+                    <div class="feed-avatar">${initials}</div>
+                    <div class="feed-info">
+                        <div>${name}</div>
+                        <span>${time} &bull; ${item.region}</span>
+                    </div>
+                    <div class="feed-price">${price}</div>
+                </div>`;
+                
+                container.innerHTML += html;
+            });
+
+        } catch (e) {
+            console.error("Error loading feed:", e);
+            // Fallback Dummy jika error (untuk demo)
+            container.innerHTML = `
+                <div class="feed-item">
+                    <div class="feed-avatar">AL</div>
+                    <div class="feed-info"><div>Alpha Test</div><span>2 min ago</span></div>
+                    <div class="feed-price">$12,400</div>
+                </div>
+                <div class="feed-item">
+                    <div class="feed-avatar">BE</div>
+                    <div class="feed-info"><div>Beta User</div><span>15 min ago</span></div>
+                    <div class="feed-price">$4,250</div>
+                </div>
+            `;
+        }
+    }
+</script>
+
+{% endblock %}

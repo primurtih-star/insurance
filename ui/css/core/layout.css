@@ -1,0 +1,167 @@
+/* ==========================================================================
+   core/layout.css
+   - Main Dashboard Layout Structure
+   - Sidebar, Topbar, Main Content Wrapper
+   - Responsive Grid System adjustments
+   ========================================================================== */
+
+/* APP SHELL 
+   Wrapper utama untuk membungkus Sidebar + Main Content
+*/
+.app-shell {
+  display: flex;
+  height: 100vh; /* Full viewport height */
+  width: 100vw;
+  overflow: hidden; /* Mencegah scroll pada body utama */
+  background-color: var(--color-bg);
+}
+
+/* SIDEBAR REGION 
+   Area kiri untuk navigasi
+*/
+.app-sidebar {
+  width: 280px;
+  height: 100%;
+  flex-shrink: 0; /* Jangan mengecil walau layar sempit */
+  background-color: var(--color-surface);
+  border-right: 1px solid var(--color-border);
+  display: flex;
+  flex-direction: column;
+  transition: width var(--duration-medium) var(--ease-smooth), transform var(--duration-medium) var(--ease-smooth);
+  z-index: var(--z-components);
+}
+
+/* Sidebar Header (Logo area) */
+.sidebar-header {
+  height: 64px;
+  display: flex;
+  align-items: center;
+  padding: 0 var(--space-5);
+  border-bottom: 1px solid var(--color-border);
+}
+
+/* Sidebar Body (Scrollable Menu) */
+.sidebar-content {
+  flex: 1;
+  overflow-y: auto; /* Scroll jika menu panjang */
+  padding: var(--space-4);
+}
+
+/* Sidebar Footer (User profile / settings) */
+.sidebar-footer {
+  padding: var(--space-4);
+  border-top: 1px solid var(--color-border);
+  background-color: var(--color-muted);
+}
+
+/* MAIN CONTENT REGION 
+   Area kanan untuk Header + Isi Halaman
+*/
+.app-main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-width: 0; /* Mencegah overflow flex item */
+  position: relative;
+}
+
+/* TOPBAR / HEADER 
+   Navigasi atas
+*/
+.app-header {
+  height: 64px;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 var(--space-6);
+  background: rgba(255, 255, 255, 0.8);
+  backdrop-filter: blur(12px); /* Glass effect */
+  border-bottom: 1px solid var(--color-border);
+  position: sticky;
+  top: 0;
+  z-index: var(--z-components);
+}
+
+[data-theme="dark"] .app-header {
+  background: rgba(15, 23, 32, 0.8);
+}
+
+/* PAGE CONTENT 
+   Area isi yang berubah-ubah
+*/
+.app-content {
+  flex: 1;
+  overflow-y: auto; /* Scroll terjadi di sini, bukan di body */
+  padding: var(--space-6);
+  scroll-behavior: smooth;
+}
+
+/* Container khusus untuk isi halaman agar tidak terlalu lebar */
+.content-container {
+  width: 100%;
+  max-width: 1400px; /* Batas lebar agar enak dibaca di layar lebar */
+  margin: 0 auto;
+}
+
+/* ==========================================================================
+   RESPONSIVE LAYOUT
+   ========================================================================== */
+
+/* Tablet & Mobile (Below 1024px) */
+@media (max-width: 1024px) {
+  .app-sidebar {
+    position: fixed;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    transform: translateX(-100%); /* Sembunyikan sidebar ke kiri */
+  }
+
+  /* Class .active ditambahkan via JS saat tombol menu diklik */
+  .app-sidebar.is-open {
+    transform: translateX(0);
+    box-shadow: var(--shadow-3);
+  }
+
+  /* Overlay backdrop saat sidebar terbuka di mobile */
+  .sidebar-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.4);
+    backdrop-filter: blur(2px);
+    z-index: var(--z-components);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity var(--duration-fast);
+  }
+  
+  .sidebar-overlay.is-visible {
+    opacity: 1;
+    pointer-events: auto;
+  }
+}
+
+/* ==========================================================================
+   SCROLLBAR CUSTOMIZATION
+   Agar scrollbar terlihat modern dan menyatu dengan tema
+   ========================================================================== */
+
+/* Webkit browsers (Chrome, Safari) */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--color-border);
+  border-radius: var(--r-full);
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--color-weak);
+}

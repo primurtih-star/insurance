@@ -1,0 +1,363 @@
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;500;700;800;900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+<style>
+    /* --- 1. CORE THEME (MEDICAL TECH) --- */
+    :root {
+        --bg-color: #f8fafc;        /* Soft Light Background */
+        --primary: #0ea5e9;         /* Sky Blue - Trust & Tech */
+        --primary-dark: #0284c7;
+        --primary-soft: #e0f2fe;    /* Blue 100 */
+        --secondary: #10b981;       /* Emerald Green - Health */
+        --text-dark: #0f172a;       /* Slate 900 */
+        --text-light: #64748b;      /* Slate 500 */
+        --glass: rgba(255, 255, 255, 0.95);
+        --shadow-subtle: 0 10px 30px rgba(0,0,0,0.05);
+        --font-main: 'Plus Jakarta Sans', sans-serif;
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+    background-color: var(--bg-color);
+    font-family: var(--font-main);
+    overflow: auto;     /* FIX: agar stage 3 selalu kelihatan */
+    height: 100vh; width: 100vw;
+    color: var(--text-dark);
+}
+
+
+    /* Override Layout */
+    #intro-screen .sidebar,
+#intro-screen .top-header {
+    display: none !important;
+}
+
+#intro-screen .main-wrapper {
+    margin: 0 !important;
+    width: 100% !important;
+    min-height: 100vh !important;
+}
+
+#intro-screen .content-body {
+    padding: 0 !important;
+}
+
+
+    /* --- 2. LAYOUT LAYERS --- */
+    .viewport {
+        position: relative; width: 100%; height: 100%;
+        display: flex; justify-content: center; align-items: center;
+        background: radial-gradient(circle at 50% 50%, #ffffff 0%, #f1f5f9 100%);
+    }
+
+    #molecular-canvas {
+        position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+        z-index: 0; opacity: 0.6; pointer-events: none;
+    }
+
+    /* --- 3. ANIMATION STAGES --- */
+    
+    /* STAGE 1: LOGO PULSE & HEARTBEAT */
+    .intro-stage {
+        z-index: 10;
+        display: flex; flex-direction: column; align-items: center;
+        transition: all 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .logo-container {
+        position: relative;
+        width: 130px; height: 130px;
+        background: var(--glass);
+        border-radius: 30px;
+        box-shadow: 0 15px 30px rgba(14, 165, 233, 0.15); /* Soft Blue Shadow */
+        display: flex; align-items: center; justify-content: center;
+        margin-bottom: 30px;
+        animation: floatIcon 3.5s ease-in-out infinite;
+        border: 2px solid var(--primary-soft); /* Subtle Border */
+    }
+
+    .logo-icon {
+        font-size: 4rem;
+        background: linear-gradient(135deg, var(--primary), var(--secondary));
+        -webkit-background-clip: text;
+        background-clip: text;
+        -webkit-text-fill-color: transparent;
+    }
+
+    /* EKG / Heartbeat Line Animation */
+    .ekg-line {
+        width: 350px; height: 60px;
+        position: relative; overflow: hidden;
+        margin-bottom: 10px;
+    }
+    .ekg-svg {
+        width: 100%; height: 100%;
+        stroke: var(--primary); stroke-width: 3; fill: none;
+        stroke-dasharray: 1000; stroke-dashoffset: 1000;
+        animation: drawEKG 1.5s cubic-bezier(0.4, 0, 0.2, 1) infinite; /* Dipercepat */
+    }
+
+    .loading-text {
+        font-size: 0.9rem; font-weight: 700; color: var(--text-light);
+        letter-spacing: 2px; text-transform: uppercase;
+        margin-top: 10px;
+        font-family: var(--font-main);
+    }
+
+    /* STAGE 2: BIOMETRIC SCANNER (Clean) */
+    .scanner-stage {
+        position: absolute; inset: 0;
+        display: none; 
+        flex-direction: column; align-items: center; justify-content: center;
+        background: rgba(255,255,255,0.95);
+        backdrop-filter: blur(15px); z-index: 20;
+    }
+
+    .scan-ring {
+        width: 280px; height: 280px; border-radius: 50%;
+        border: 3px solid var(--primary-soft); /* Lebih tebal */
+        position: relative; display: flex; align-items: center; justify-content: center;
+    }
+    .scan-ring::after {
+        content: ''; position: absolute; inset: -5px; border-radius: 50%;
+        border: 4px solid transparent; border-top-color: var(--primary);
+        animation: spin 1.8s linear infinite;
+    }
+    .scan-ring::before {
+        content: ''; position: absolute; inset: 15px; border-radius: 50%;
+        border: 4px solid transparent; border-bottom-color: var(--secondary);
+        animation: spinReverse 2.2s linear infinite;
+    }
+
+    .scan-icon-main { font-size: 4.5rem; color: var(--primary); }
+
+    .data-card {
+        background: var(--glass); padding: 25px 50px; border-radius: 20px;
+        box-shadow: 0 20px 50px -10px rgba(14, 165, 233, 0.25);
+        text-align: center; margin-top: -140px; z-index: 2;
+        border: 1px solid white;
+        transform: translateY(20px); opacity: 0;
+        animation: slideUpFade 0.6s forwards 0.5s;
+    }
+
+    /* STAGE 3: HERO REVEAL */
+    .hero-stage {
+        display: none; flex-direction: column; align-items: center; z-index: 30;
+        text-align: center; max-width: 850px;
+        padding: 20px; /* Tambah padding agar tidak mepet */
+    }
+
+    .hero-badge {
+        background: var(--primary-soft); color: var(--primary-dark);
+        padding: 10px 20px; border-radius: 50px; font-weight: 800; font-size: 0.85rem;
+        margin-bottom: 30px; letter-spacing: 1px; display: inline-flex; align-items: center; gap: 10px;
+        border: 1px solid var(--primary-soft);
+    }
+
+    .hero-title {
+        font-size: 5rem; font-weight: 900; line-height: 1.05;
+        background: linear-gradient(135deg, var(--text-dark) 30%, var(--primary) 100%);
+        -webkit-background-clip: text;
+        background-clip: text;
+        -webkit-text-fill-color: transparent;
+        margin-bottom: 25px; letter-spacing: -3px;
+    }
+    .hero-title span { font-weight: 300; }
+
+    .hero-desc {
+        font-size: 1.3rem; color: var(--text-light); line-height: 1.6; margin-bottom: 50px;
+        max-width: 700px; font-weight: 500;
+    }
+
+    .btn-medical {
+        background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+        color: white; padding: 20px 60px; border-radius: 50px;
+        font-weight: 800; font-size: 1.1rem; text-decoration: none;
+        box-shadow: 0 15px 40px rgba(14, 165, 233, 0.4);
+        transition: 0.3s; border: none; display: inline-flex; align-items: center; gap: 12px;
+    }
+    .btn-medical:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 20px 50px rgba(14, 165, 233, 0.6);
+        background: var(--primary-dark);
+    }
+
+    /* --- ANIMATIONS --- */
+    @keyframes floatIcon { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-12px); } }
+    @keyframes drawEKG { 0% { stroke-dashoffset: 1000; } 100% { stroke-dashoffset: 0; } }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    @keyframes spinReverse { to { transform: rotate(-360deg); } }
+    @keyframes slideUpFade { to { opacity: 1; transform: translateY(0); } }
+    .fade-out { opacity: 0; transform: scale(0.95); pointer-events: none; }
+    
+    @media (max-width: 768px) {
+        .hero-title { font-size: 3rem; }
+        .hero-desc { font-size: 1rem; }
+        .ekg-line { width: 100%; }
+        .data-card { padding: 20px 30px; margin-top: -100px; }
+    }
+</style>
+
+<div class="viewport">
+    
+    <canvas id="molecular-canvas"></canvas>
+
+    <div id="stage-1" class="intro-stage">
+        <div class="logo-container">
+            <i class="fas fa-heartbeat logo-icon"></i>
+        </div>
+        
+        <div class="ekg-line">
+            <svg class="ekg-svg" viewBox="0 0 500 100" preserveAspectRatio="none">
+                <polyline points="0,50 150,50 170,10 190,90 210,50 230,50 250,20 270,80 290,50 500,50" />
+            </svg>
+        </div>
+
+        <div class="loading-text" id="loading-txt">INITIALIZING MEDICAL ENGINE...</div>
+    </div>
+
+    <div id="stage-2" class="scanner-stage">
+        <div class="scan-ring">
+            <i class="fas fa-shield-virus scan-icon-main"></i>
+        </div>
+        <div class="data-card">
+            <h3 style="margin-bottom:5px; color:var(--text-dark); font-size:1.1rem; font-weight:700;">System Diagnostics</h3>
+            <div style="font-size:2.8rem; font-weight:800; color:var(--primary); margin: 5px 0;" id="scan-percent">0%</div>
+            <p style="font-size:0.8rem; color:var(--text-light); margin:0;">Verifying HIPAA Compliance & Data Integrity</p>
+        </div>
+    </div>
+
+    <div id="stage-3" class="hero-stage">
+        <span class="hero-badge"><i class="fas fa-check-circle"></i> SYSTEM READY</span>
+        <h1 class="hero-title">INSURE AI <br> <span style="font-weight:300;">ENTERPRISE</span></h1>
+        <p class="hero-desc">
+            Platform intelijen aktuaria kesehatan berbasis AI untuk prediksi biaya medis yang presisi, transparan, dan terpercaya.
+        </p>
+        <a href="{{ url_for('main.dashboard') }}" class="btn-medical">
+            Buka Dashboard <i class="fas fa-arrow-right"></i>
+        </a>
+    </div>
+
+</div>
+
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+    
+    // --- 1. CANVAS MOLECULAR NETWORK ---
+    const canvas = document.getElementById('molecular-canvas');
+    const ctx = canvas.getContext('2d');
+    let width, height;
+    let particles = [];
+
+    const resize = () => { width = canvas.width = window.innerWidth; height = canvas.height = window.innerHeight; };
+    window.addEventListener('resize', resize);
+    resize();
+
+    class Molecule {
+        constructor() {
+            this.x = Math.random() * width;
+            this.y = Math.random() * height;
+            this.vx = (Math.random() - 0.5) * 0.5; // Slow movement
+            this.vy = (Math.random() - 0.5) * 0.5;
+            this.size = Math.random() * 2 + 1;
+            this.color = Math.random() > 0.5 ? '#0ea5e9' : '#cbd5e1'; // Blue or Gray
+        }
+        update() {
+            this.x += this.vx; this.y += this.vy;
+            if (this.x < 0 || this.x > width) this.vx *= -1;
+            if (this.y < 0 || this.y > height) this.vy *= -1;
+        }
+        draw() {
+            ctx.beginPath();
+            ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+            ctx.fillStyle = this.color;
+            ctx.fill();
+        }
+    }
+
+    // Create 50 Particles
+    for(let i=0; i<50; i++) particles.push(new Molecule());
+
+    function animateCanvas() {
+        ctx.clearRect(0, 0, width, height);
+        
+        for (let i = 0; i < particles.length; i++) {
+            let p1 = particles[i];
+            p1.update();
+            p1.draw();
+            
+            // Draw connections (Subtle Bonds)
+            for (let j = i + 1; j < particles.length; j++) {
+                let p2 = particles[j];
+                let dx = p1.x - p2.x;
+                let dy = p1.y - p2.y;
+                let dist = Math.sqrt(dx*dx + dy*dy);
+                
+                if (dist < 150) {
+                    ctx.beginPath();
+                    ctx.strokeStyle = `rgba(14, 165, 233, ${0.15 - dist/1000})`; 
+                    ctx.lineWidth = 1;
+                    ctx.beginPath();
+                    ctx.moveTo(p1.x, p1.y);
+                    ctx.lineTo(p2.x, p2.y);
+                    ctx.stroke();
+                }
+            }
+        }
+        requestAnimationFrame(animateCanvas);
+    }
+    animateCanvas();
+
+    // --- 2. SEQUENCE LOGIC (TRANSITIONS) ---
+    const stage1 = document.getElementById('stage-1');
+    const stage2 = document.getElementById('stage-2');
+    const stage3 = document.getElementById('stage-3');
+    const loadText = document.getElementById('loading-txt');
+    const scanNum = document.getElementById('scan-percent');
+
+    // Sequence Start
+    setTimeout(() => {
+        loadText.innerText = "LOADING CORE MODELS...";
+    }, 1500);
+
+    setTimeout(() => {
+        // Transition 1 -> 2
+        stage1.classList.add('fade-out');
+        setTimeout(() => {
+            stage1.style.display = 'none';
+            stage2.style.display = 'flex';
+            startScanning();
+        }, 600);
+    }, 3000);
+
+    function startScanning() {
+        let percent = 0;
+        const interval = setInterval(() => {
+            percent = Math.min(percent + Math.floor(Math.random() * 8) + 3, 100);  // FIX SCAN TERLALU LAMA
+            if (percent > 100) percent = 100;
+            scanNum.innerText = percent + "%";
+
+            if (percent === 100) {
+                clearInterval(interval);
+                setTimeout(() => {
+                    // Transition 2 -> 3
+                    stage2.classList.add('fade-out');
+                    setTimeout(() => {
+                        stage2.style.display = 'none';
+                        stage3.style.display = 'flex';
+                        // Final Bounce Effect
+                        stage3.animate([
+                            { transform: 'scale(0.95)', opacity: 0 },
+                            { transform: 'scale(1.02)', opacity: 1 },
+                            { transform: 'scale(1)', opacity: 1 }
+                        ], { duration: 800, fill: 'forwards', easing: 'cubic-bezier(0.2, 0.8, 0.2, 1)' });
+                    }, 500);
+                }, 800);
+            }
+        }, 40); // Scan speed
+    }
+
+});
+</script>

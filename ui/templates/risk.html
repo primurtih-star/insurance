@@ -1,0 +1,1179 @@
+{% extends "layout.html" %}
+{% block content %}
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/countup.js/2.0.7/countUp.min.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+<style>
+:root {
+    --primary: #059669;
+    --primary-light: #10b981;
+    --primary-bg: #ecfdf5;
+    --primary-soft: #d1fae5;
+    --accent: #3b82f6;
+    --accent-soft: #eff6ff;
+    --danger-color: #ef4444;
+    --danger-soft: #fee2e2;
+    --warning-color: #f59e0b;
+    --warning-soft: #fef3c7;
+    --text-dark: #0f172a;
+    --text-muted: #64748b;
+    --border-color: #e2e8f0;
+    --glass-surface: rgba(255, 255, 255, 0.96);
+    --glass-border: rgba(255, 255, 255, 0.7);
+    --shadow-elevation: 0 16px 45px -18px rgba(15, 23, 42, 0.45);
+    --font-main: 'Plus Jakarta Sans', sans-serif;
+}
+body {
+    font-family: var(--font-main);
+    background: radial-gradient(circle at top left, #ecfdf5 0, #f9fafb 38%, #eef2ff 100%);
+}
+.dashboard-container {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 32px 20px 48px 20px;
+}
+.risk-header {
+    margin-bottom: 24px;
+}
+.risk-title {
+    font-size: 2.3rem;
+    font-weight: 900;
+    color: var(--text-dark);
+    letter-spacing: -0.03em;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+.risk-title i {
+    color: var(--danger-color);
+}
+.risk-subtitle {
+    color: var(--text-muted);
+    margin-top: 4px;
+    font-size: 0.98rem;
+}
+.risk-grid {
+    display: grid;
+    grid-template-columns: 440px minmax(0, 1fr);
+    gap: 28px;
+}
+.glass-card {
+    background: var(--glass-surface);
+    backdrop-filter: blur(22px);
+    border-radius: 26px;
+    padding: 26px 26px 24px 26px;
+    border: 1px solid var(--glass-border);
+    box-shadow: var(--shadow-elevation);
+    position: relative;
+    overflow: hidden;
+    transition: transform 0.25s ease, box-shadow 0.25s ease, border-color 0.25s ease;
+}
+.glass-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 25px 70px -30px rgba(15, 23, 42, 0.65);
+}
+.card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 18px;
+    padding-bottom: 14px;
+    border-bottom: 1px solid var(--border-color);
+}
+.card-title {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 1rem;
+    font-weight: 800;
+    color: var(--text-dark);
+}
+.card-title i {
+    color: var(--primary);
+}
+.card-meta {
+    font-size: 0.78rem;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    letter-spacing: 0.08em;
+}
+.badge-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 4px 10px;
+    border-radius: 999px;
+    font-size: 0.7rem;
+    font-weight: 800;
+    letter-spacing: 0.08em;
+}
+.badge-tier {
+    background: var(--accent-soft);
+    color: var(--accent);
+}
+.badge-risk {
+    background: var(--primary-bg);
+    color: var(--text-dark);
+}
+.badge-critical {
+    background: var(--danger-soft);
+    color: var(--danger-color);
+}
+.badge-high {
+    background: var(--warning-soft);
+    color: #b45309;
+}
+.badge-moderate {
+    background: var(--primary-soft);
+    color: #047857;
+}
+.badge-low {
+    background: #e0f2fe;
+    color: #0369a1;
+}
+.gauge-wrapper {
+    position: relative;
+    height: 260px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+.gauge-inner {
+    position: relative;
+    width: 230px;
+    height: 230px;
+}
+.gauge-needle {
+    position: absolute;
+    width: 4px;
+    height: 90px;
+    border-radius: 999px;
+    top: 50%;
+    left: 50%;
+    transform-origin: 50% 80%;
+    transform: translate(-50%, -80%) rotate(0deg);
+}
+.gauge-center-dot {
+    position: absolute;
+    width: 16px;
+    height: 16px;
+    border-radius: 999px;
+    background: #f9fafb;
+    border: 3px solid #111827;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+}
+.score-overlay {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    justify-content: center;
+    align-items: center;
+    pointer-events: none;
+}
+.score-big {
+    font-size: 4.2rem;
+    font-weight: 900;
+    line-height: 1;
+    color: var(--text-dark);
+}
+.score-label {
+    font-size: 0.78rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.16em;
+    color: var(--text-muted);
+}
+.tier-label {
+    font-size: 0.75rem;
+    font-weight: 700;
+    margin-top: 2px;
+    color: var(--text-muted);
+}
+.patient-details {
+    margin-top: 18px;
+    border-radius: 16px;
+    background: #f9fafb;
+    padding: 14px 16px 6px 16px;
+}
+.detail-row {
+    display: grid;
+    grid-template-columns: auto auto;
+    align-items: center;
+    padding: 5px 0;
+    column-gap: 16px;
+    font-size: 0.9rem;
+}
+.detail-label {
+    color: var(--text-muted);
+}
+.detail-val {
+    justify-self: flex-end;
+    font-weight: 700;
+    color: var(--text-dark);
+}
+.detail-val.risk {
+    color: var(--danger-color);
+}
+.detail-val.safe {
+    color: var(--primary);
+}
+.detail-val.cost {
+    color: var(--accent);
+}
+.report-btn {
+    width: 100%;
+    margin-top: 18px;
+    border-radius: 11px;
+    border: 1px solid var(--border-color);
+    padding: 11px 14px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    font-size: 0.88rem;
+    font-weight: 600;
+    background: #ffffff;
+    color: var(--text-muted);
+    cursor: pointer;
+    transition: background 0.2s, color 0.2s, box-shadow 0.2s, transform 0.15s;
+}
+.report-btn i {
+    font-size: 0.95rem;
+}
+.report-btn:hover {
+    background: #0f172a;
+    color: #f9fafb;
+    transform: translateY(-1px);
+    box-shadow: 0 18px 40px -24px rgba(15, 23, 42, 0.8);
+}
+.analytics-wrapper {
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+}
+.projection-card {
+    background: linear-gradient(120deg, #059669 0%, #10b981 42%, #22c55e 100%);
+    color: #f9fafb;
+    border-radius: 22px;
+    padding: 22px 26px 22px 26px;
+    position: relative;
+    overflow: hidden;
+    box-shadow: 0 20px 50px -32px rgba(4, 120, 87, 0.85);
+}
+.proj-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 16px;
+}
+.proj-label {
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.16em;
+    opacity: 0.92;
+}
+.proj-tier-chip {
+    font-size: 0.7rem;
+    padding: 4px 10px;
+    border-radius: 999px;
+    border: 1px solid rgba(248, 250, 252, 0.45);
+    background: rgba(15, 23, 42, 0.15);
+}
+.proj-value {
+    margin-top: 8px;
+    font-size: 2.1rem;
+    font-weight: 900;
+    letter-spacing: 0.03em;
+    color: #fefce8;
+}
+.proj-sub {
+    margin-top: 4px;
+    font-size: 0.83rem;
+    opacity: 0.88;
+}
+.proj-chart-wrap {
+    margin-top: 10px;
+    height: 120px;
+}
+.proj-bg-icon {
+    position: absolute;
+    right: -8px;
+    bottom: -38px;
+    font-size: 7.6rem;
+    color: rgba(15, 23, 42, 0.28);
+    transform: rotate(-12deg);
+}
+.analytics-layout {
+    display: grid;
+    gap: 18px;
+    grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr);
+    align-items: stretch;
+}
+.analytics-layout.secondary {
+    grid-template-columns: minmax(0, 1.1fr) minmax(0, 1.1fr);
+}
+.insight-card {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+}
+.insight-box {
+    margin-top: 8px;
+    background: #f9fafb;
+    border-radius: 18px;
+    padding: 18px 18px 12px 18px;
+    border-left: 5px solid var(--accent);
+}
+.insight-title {
+    font-size: 0.95rem;
+    font-weight: 800;
+    color: var(--accent);
+    margin-bottom: 12px;
+}
+.insight-summary {
+    font-size: 0.86rem;
+    color: var(--text-muted);
+    margin-bottom: 10px;
+}
+.insight-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+.insight-list li {
+    display: flex;
+    align-items: flex-start;
+    gap: 9px;
+    font-size: 0.86rem;
+    color: var(--text-dark);
+    margin-bottom: 9px;
+}
+.insight-icon {
+    width: 18px;
+    text-align: center;
+    margin-top: 2px;
+    font-size: 0.82rem;
+}
+.insight-level-high {
+    color: var(--danger-color);
+}
+.insight-level-medium {
+    color: var(--warning-color);
+}
+.insight-level-low {
+    color: var(--primary);
+}
+.radar-card {
+    display: flex;
+    flex-direction: column;
+}
+.radar-wrapper {
+    position: relative;
+    height: 260px;
+    margin-top: 10px;
+}
+.risk-tier-label {
+    font-size: 0.8rem;
+    color: var(--text-muted);
+    margin-top: 4px;
+}
+.cohort-card-title {
+    font-size: 0.95rem;
+    font-weight: 800;
+    color: var(--text-dark);
+    margin-bottom: 6px;
+}
+.cohort-meta {
+    font-size: 0.8rem;
+    color: var(--text-muted);
+    margin-bottom: 12px;
+}
+.cohort-bar {
+    width: 100%;
+    height: 12px;
+    border-radius: 999px;
+    background: #e5e7eb;
+    overflow: hidden;
+    position: relative;
+}
+.cohort-bar-fill {
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 0%;
+    border-radius: 999px;
+    background: linear-gradient(90deg, #22c55e, #facc15, #f97316, #ef4444);
+    transition: width 0.5s ease;
+}
+.cohort-label-line {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 6px;
+    font-size: 0.78rem;
+    color: var(--text-muted);
+}
+.cohort-stat-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 10px;
+    margin-top: 12px;
+}
+.cohort-stat-item {
+    font-size: 0.78rem;
+    color: var(--text-muted);
+}
+.cohort-stat-val {
+    font-weight: 800;
+    color: var(--text-dark);
+}
+.sim-card {
+    display: flex;
+    flex-direction: column;
+}
+.sim-layout {
+    display: grid;
+    grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr);
+    gap: 12px;
+    align-items: flex-start;
+    margin-top: 10px;
+}
+.sim-controls {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+.sim-field-label {
+    font-size: 0.8rem;
+    font-weight: 700;
+    color: var(--text-muted);
+    margin-bottom: 2px;
+}
+.sim-toggle {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.86rem;
+    color: var(--text-dark);
+}
+.sim-toggle input {
+    width: 16px;
+    height: 16px;
+}
+.sim-slider-wrap {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+.sim-slider-wrap input[type="range"] {
+    flex: 1;
+}
+.sim-badge {
+    min-width: 60px;
+    text-align: right;
+    font-size: 0.82rem;
+    font-weight: 700;
+    color: var(--text-dark);
+}
+.sim-output {
+    background: #f9fafb;
+    border-radius: 16px;
+    padding: 12px 14px;
+    font-size: 0.84rem;
+}
+.sim-output-row {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 6px;
+}
+.sim-output-label {
+    color: var(--text-muted);
+}
+.sim-output-value {
+    font-weight: 800;
+}
+.sim-output-highlight {
+    color: var(--accent);
+}
+.sim-output-saving-positive {
+    color: var(--primary);
+}
+.sim-output-saving-negative {
+    color: var(--danger-color);
+}
+@media (max-width: 1180px) {
+    .risk-grid {
+        grid-template-columns: 1fr;
+    }
+    .projection-card {
+        order: -1;
+    }
+}
+@media (max-width: 900px) {
+    .analytics-layout,
+    .analytics-layout.secondary {
+        grid-template-columns: 1fr;
+    }
+    .sim-layout {
+        grid-template-columns: 1fr;
+    }
+}
+@media (max-width: 768px) {
+    .dashboard-container {
+        padding-inline: 14px;
+    }
+    .gauge-inner {
+        width: 210px;
+        height: 210px;
+    }
+}
+</style>
+
+<div class="dashboard-container">
+    <div class="risk-header">
+        <h2 class="risk-title">
+            <i class="fas fa-heartbeat"></i>
+            <span>Medical Risk Intelligence</span>
+        </h2>
+        <p class="risk-subtitle">
+            Analisis aktuaria terintegrasi berbasis data pasien terakhir untuk memproyeksikan risiko klinis dan biaya jangka panjang.
+        </p>
+    </div>
+
+    <div class="risk-grid">
+        <div class="glass-card" id="gauge-card">
+            <div class="card-header">
+                <div>
+                    <div class="card-title">
+                        <i class="fas fa-tachometer-alt"></i>
+                        <span>Risk Severity Score</span>
+                    </div>
+                    <div class="card-meta" id="tier-label-top">Tier Classification Pending</div>
+                </div>
+                <div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px;">
+                    <span class="badge-chip badge-tier" id="tier-badge">TIER -</span>
+                    <span class="badge-chip badge-risk" id="risk-badge-top">CALCULATING</span>
+                </div>
+            </div>
+
+            <div class="gauge-wrapper">
+                <div class="gauge-inner">
+                    <canvas id="gaugeChart"></canvas>
+                    <div id="gauge-needle" class="gauge-needle"></div>
+                    <div class="gauge-center-dot"></div>
+                    <div class="score-overlay">
+                        <div id="risk-score-display" class="score-big">0</div>
+                        <div id="risk-cat-display" class="score-label">UNKNOWN</div>
+                        <div id="tier-label-center" class="tier-label">TIER -</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="patient-details">
+                <div class="detail-row">
+                    <span class="detail-label">Patient</span>
+                    <span class="detail-val" id="d-name">-</span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Biometrics (Age / BMI)</span>
+                    <span class="detail-val" id="d-bio">-</span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Lifestyle</span>
+                    <span class="detail-val" id="d-smoker">-</span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Base Premium</span>
+                    <span class="detail-val cost" id="d-cost">-</span>
+                </div>
+            </div>
+
+            <button class="report-btn" onclick="window.print()">
+                <i class="fas fa-file-medical-alt"></i>
+                <span>Unduh Laporan Medis</span>
+            </button>
+        </div>
+
+        <div class="analytics-wrapper">
+            <div class="projection-card">
+                <div class="proj-header">
+                    <div>
+                        <div class="proj-label">Proyeksi Biaya 5 Tahun (CAGR Estimate)</div>
+                        <div class="proj-value" id="future-cost">$0.00</div>
+                        <div class="proj-sub" id="future-caption">
+                            Estimasi inflasi medis global dan eskalasi risiko individu.
+                        </div>
+                    </div>
+                    <div class="proj-tier-chip" id="projection-tier-chip">Risk Band: -</div>
+                </div>
+                <div class="proj-chart-wrap">
+                    <canvas id="forecastChart"></canvas>
+                </div>
+                <i class="fas fa-chart-line proj-bg-icon"></i>
+            </div>
+
+            <div class="analytics-layout">
+                <div class="glass-card insight-card">
+                    <div class="card-header">
+                        <div>
+                            <div class="card-title">
+                                <i class="fas fa-stethoscope"></i>
+                                <span>Diagnostic Insights</span>
+                            </div>
+                            <div class="card-meta" id="insight-meta">Personalized clinical narrative</div>
+                        </div>
+                    </div>
+                    <div class="insight-box">
+                        <div class="insight-title">Key Recommendations</div>
+                        <div id="insight-summary" class="insight-summary">
+                            Menganalisis profil risiko pasien berdasarkan usia, BMI, kebiasaan merokok, dan proyeksi biaya.
+                        </div>
+                        <ul id="ai-list" class="insight-list">
+                            <li><span class="insight-icon"><i class="fas fa-spinner fa-spin"></i></span><span>Sedang memuat data analitik pasien...</span></li>
+                        </ul>
+                    </div>
+                </div>
+
+                <div class="glass-card radar-card">
+                    <div class="card-header">
+                        <div>
+                            <div class="card-title">
+                                <i class="fas fa-chart-radar"></i>
+                                <span>Faktor Risiko</span>
+                            </div>
+                            <div class="card-meta">Comparative risk profile vs ideal benchmark</div>
+                        </div>
+                    </div>
+                    <div class="radar-wrapper">
+                        <canvas id="radarChart"></canvas>
+                    </div>
+                    <div class="risk-tier-label" id="radar-tier-label">Profil risiko akan ditampilkan berdasarkan data terakhir.</div>
+                </div>
+            </div>
+
+            <div class="analytics-layout secondary">
+                <div class="glass-card">
+                    <div class="card-header">
+                        <div>
+                            <div class="card-title">
+                                <i class="fas fa-users"></i>
+                                <span>Cohort Comparison</span>
+                            </div>
+                            <div class="card-meta">Position against entire insured population</div>
+                        </div>
+                    </div>
+                    <div>
+                        <div class="cohort-card-title" id="cohort-label">Patient percentile position</div>
+                        <div class="cohort-meta" id="cohort-subtitle">Calculating cohort statistics...</div>
+                        <div class="cohort-bar">
+                            <div id="cohort-bar-fill" class="cohort-bar-fill"></div>
+                        </div>
+                        <div class="cohort-label-line">
+                            <span>Lower risk</span>
+                            <span id="cohort-percentile-label">Top 0%</span>
+                            <span>Higher risk</span>
+                        </div>
+                        <div class="cohort-stat-grid">
+                            <div class="cohort-stat-item">
+                                <div>Population size</div>
+                                <div class="cohort-stat-val" id="cohort-count">-</div>
+                            </div>
+                            <div class="cohort-stat-item">
+                                <div>Average risk score</div>
+                                <div class="cohort-stat-val" id="cohort-avg-score">-</div>
+                            </div>
+                            <div class="cohort-stat-item">
+                                <div>Above average</div>
+                                <div class="cohort-stat-val" id="cohort-above-avg">-</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="glass-card sim-card">
+                    <div class="card-header">
+                        <div>
+                            <div class="card-title">
+                                <i class="fas fa-sliders-h"></i>
+                                <span>What-If Simulator</span>
+                            </div>
+                            <div class="card-meta">Simulate lifestyle changes impact</div>
+                        </div>
+                    </div>
+                    <div class="sim-layout">
+                        <div class="sim-controls">
+                            <div>
+                                <div class="sim-field-label">Lifestyle change</div>
+                                <label class="sim-toggle">
+                                    <input type="checkbox" id="sim-stop-smoking">
+                                    <span>Stop smoking in next 12 months</span>
+                                </label>
+                            </div>
+                            <div>
+                                <div class="sim-field-label">Target BMI</div>
+                                <div class="sim-slider-wrap">
+                                    <input type="range" id="sim-bmi" min="18" max="45" step="0.5">
+                                    <span class="sim-badge" id="sim-bmi-label">BMI 0</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="sim-output">
+                            <div class="sim-output-row">
+                                <span class="sim-output-label">Simulated risk score</span>
+                                <span class="sim-output-value" id="sim-risk-score">-</span>
+                            </div>
+                            <div class="sim-output-row">
+                                <span class="sim-output-label">Risk category</span>
+                                <span class="sim-output-value" id="sim-risk-label">-</span>
+                            </div>
+                            <div class="sim-output-row">
+                                <span class="sim-output-label">Projected 5y cost</span>
+                                <span class="sim-output-value sim-output-highlight" id="sim-cost">-</span>
+                            </div>
+                            <div class="sim-output-row">
+                                <span class="sim-output-label">Potential savings</span>
+                                <span class="sim-output-value" id="sim-savings">-</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+<script>
+class UltimateRiskEngine {
+
+    constructor() {
+        this.api = "/api/predict/history";
+        this.data = [];
+        this.gaugeChart = null;
+        this.radarChart = null;
+        this.forecastChart = null;
+        this.basePatient = null;
+        this.baseMeta = null;
+        this.baseFutureCost = null;
+        this.init();
+    }
+
+    async init() {
+        try {
+            const res = await fetch(this.api);
+            const data = await res.json();
+            this.data = data || [];
+            if (!this.data.length) {
+                this.renderEmptyState();
+                return;
+            }
+            const latest = this.data.at(-1);
+            const riskMeta = this.calculateRisk(latest);
+
+            this.basePatient = latest;
+            this.baseMeta = riskMeta;
+
+            this.renderGauge(riskMeta);
+            this.renderRadar(latest, riskMeta);
+            this.renderDetails(latest, riskMeta);
+            this.renderProjection(latest.prediction, riskMeta);
+            this.renderInsights(latest, riskMeta);
+            this.renderCohort(riskMeta);
+            this.setupSimulation(latest, riskMeta);
+        } catch (e) {
+            document.getElementById("ai-list").innerHTML =
+                `<li><span class="insight-icon"><i class="fas fa-exclamation-triangle"></i></span><span>Gagal terhubung ke server analitik.</span></li>`;
+        }
+    }
+
+    calculateRisk(d) {
+        const sAge = Math.min(d.age / 75, 1) * 25;
+        const sBMI = Math.min(d.bmi / 40, 1) * 30;
+        const sSmoke = d.smoker === "yes" ? 35 : 0;
+        const sKids = Math.min(d.children * 3, 10);
+        const score = Math.min(Math.floor(sAge + sBMI + sSmoke + sKids), 100);
+
+        let tier = "Tier-1 Healthy Band";
+        let tierKey = "T1";
+        let label = "LOW RISK";
+        let color = "#10b981";
+
+        if (score >= 35 && score < 60) {
+            tier = "Tier-2 Monitored Band";
+            tierKey = "T2";
+            label = "MODERATE";
+            color = "#f59e0b";
+        }
+        if (score >= 60 && score < 75) {
+            tier = "Tier-3 Supervision Band";
+            tierKey = "T3";
+            label = "HIGH RISK";
+            color = "#f97316";
+        }
+        if (score >= 75) {
+            tier = "Tier-4 Critical Care Band";
+            tierKey = "T4";
+            label = "CRITICAL";
+            color = "#ef4444";
+        }
+
+        return { score, label, color, tier, tierKey };
+    }
+
+    formatCurrency(v) {
+        return new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(v || 0);
+    }
+
+    renderEmptyState() {
+        document.getElementById("risk-score-display").innerText = "0";
+        document.getElementById("risk-cat-display").innerText = "NO DATA";
+        document.getElementById("tier-label-center").innerText = "TIER -";
+        document.getElementById("tier-label-top").innerText = "Tidak ada data riwayat";
+        document.getElementById("ai-list").innerHTML =
+            `<li><span class="insight-icon"><i class="fas fa-info-circle"></i></span><span>Belum ada prediksi dilakukan. Silakan lakukan prediksi terlebih dahulu.</span></li>`;
+    }
+
+    renderGauge(meta) {
+        const ctx = document.getElementById("gaugeChart").getContext("2d");
+        if (this.gaugeChart) this.gaugeChart.destroy();
+
+        this.gaugeChart = new Chart(ctx, {
+            type: "doughnut",
+            data: {
+                labels: ["Risk", "Safe"],
+                datasets: [{
+                    data: [meta.score, 100 - meta.score],
+                    backgroundColor: [meta.color, "#e5e7eb"],
+                    borderWidth: 0,
+                    circumference: 260,
+                    rotation: 230
+                }]
+            },
+            options: {
+                responsive: true,
+                cutout: "84%",
+                plugins: { legend: false, tooltip: false }
+            }
+        });
+
+        const scoreEl = document.getElementById("risk-score-display");
+        const catEl = document.getElementById("risk-cat-display");
+        const tierCenter = document.getElementById("tier-label-center");
+        const riskTop = document.getElementById("risk-badge-top");
+        const tierTop = document.getElementById("tier-badge");
+        const tierLabelTop = document.getElementById("tier-label-top");
+
+        scoreEl.innerText = meta.score;
+        catEl.innerText = meta.label;
+        tierCenter.innerText = meta.tierKey;
+        riskTop.innerText = meta.label;
+        tierTop.innerText = meta.tier;
+        tierLabelTop.innerText = "Current " + meta.tier;
+        riskTop.className = "badge-chip badge-risk";
+        tierTop.className = "badge-chip badge-tier";
+
+        if (meta.label === "CRITICAL") riskTop.classList.add("badge-critical");
+        else if (meta.label === "HIGH RISK") riskTop.classList.add("badge-high");
+        else if (meta.label === "MODERATE") riskTop.classList.add("badge-moderate");
+        else riskTop.classList.add("badge-low");
+
+        const needle = document.getElementById("gauge-needle");
+        const minAngle = -130;
+        const maxAngle = 130;
+        const angle = minAngle + ((meta.score / 100) * (maxAngle - minAngle));
+        needle.style.transform = `translate(-50%, -80%) rotate(${angle}deg)`;
+        needle.style.background = meta.color;
+    }
+
+    renderRadar(d, meta) {
+        const ctx = document.getElementById("radarChart").getContext("2d");
+        if (this.radarChart) this.radarChart.destroy();
+
+        const normAge = (d.age / 75) * 100;
+        const normBMI = (d.bmi / 40) * 100;
+        const normSmoke = d.smoker === "yes" ? 100 : 10;
+        const normCost = Math.min((d.prediction / 50000) * 100, 100);
+
+        const patient = [normAge, normBMI, normSmoke, normCost];
+        const benchmark = [30, 50, 10, 20];
+
+        Chart.defaults.font.family = "'Plus Jakarta Sans', sans-serif";
+
+        this.radarChart = new Chart(ctx, {
+            type: "radar",
+            data: {
+                labels: ["Age", "BMI", "Smoking", "Medical Cost"],
+                datasets: [
+                    {
+                        label: "Patient",
+                        data: patient,
+                        backgroundColor: meta.color + "22",
+                        borderColor: meta.color,
+                        borderWidth: 2,
+                        pointBackgroundColor: meta.color,
+                        pointRadius: 3
+                    },
+                    {
+                        label: "Ideal Benchmark",
+                        data: benchmark,
+                        backgroundColor: "rgba(148,163,184,0.08)",
+                        borderColor: "#94a3b8",
+                        borderDash: [5, 5],
+                        pointRadius: 0
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    r: {
+                        min: 0,
+                        max: 100,
+                        ticks: { display: false },
+                        grid: { color: "#e5e7eb" },
+                        angleLines: { color: "#cbd5e1" },
+                        pointLabels: {
+                            font: { size: 11, weight: "600" },
+                            color: "#475569"
+                        }
+                    }
+                },
+                plugins: { legend: false, tooltip: { enabled: true } }
+            }
+        });
+
+        const lbl = document.getElementById("radar-tier-label");
+        lbl.innerText = `Current profile mapped to ${meta.tier} with overall label ${meta.label.toLowerCase()}.`;
+    }
+
+    renderDetails(d, meta) {
+        document.getElementById("d-name").innerText = d.name || "Anonymous";
+        document.getElementById("d-bio").innerText = `${d.age} yrs / BMI ${d.bmi}`;
+        const smokerEl = document.getElementById("d-smoker");
+        smokerEl.innerText = d.smoker === "yes" ? "SMOKER" : "NON-SMOKER";
+        smokerEl.classList.remove("risk", "safe");
+        if (d.smoker === "yes") smokerEl.classList.add("risk");
+        else smokerEl.classList.add("safe");
+        document.getElementById("d-cost").innerText = this.formatCurrency(d.prediction);
+    }
+
+    renderProjection(baseCost, meta) {
+        const rateInflation = 0.08;
+        const riskFactor = meta.score / 2500;
+        const totalRate = rateInflation + riskFactor;
+
+        const years = [0, 1, 2, 3, 4, 5];
+        const values = years.map(y => baseCost * Math.pow(1 + totalRate, y));
+
+        if (this.forecastChart) this.forecastChart.destroy();
+        const ctx = document.getElementById("forecastChart").getContext("2d");
+
+        this.forecastChart = new Chart(ctx, {
+            type: "line",
+            data: {
+                labels: ["Now", "Y+1", "Y+2", "Y+3", "Y+4", "Y+5"],
+                datasets: [{
+                    label: "Projected Cost",
+                    data: values,
+                    borderColor: "#fef9c3",
+                    backgroundColor: "rgba(254, 240, 138, 0.35)",
+                    borderWidth: 2,
+                    tension: 0.35,
+                    pointRadius: 0,
+                    fill: true
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { legend: false, tooltip: { enabled: false } },
+                scales: {
+                    x: { display: false },
+                    y: { display: false }
+                }
+            }
+        });
+
+        const futureVal = values.at(-1);
+        this.baseFutureCost = futureVal;
+        document.getElementById("future-cost").innerText = this.formatCurrency(futureVal);
+        const tierChip = document.getElementById("projection-tier-chip");
+        tierChip.innerText = `Risk Band: ${meta.tierKey}`;
+    }
+
+    renderInsights(d, meta) {
+        const ul = document.getElementById("ai-list");
+        const summaryEl = document.getElementById("insight-summary");
+        const metaEl = document.getElementById("insight-meta");
+        ul.innerHTML = "";
+
+        const summary = [];
+        summary.push(`Profil risiko terklasifikasi sebagai ${meta.label.toLowerCase()} dengan skor ${meta.score} dalam ${meta.tier}.`);
+        if (d.smoker === "yes") summary.push("Kebiasaan merokok menjadi kontributor dominan terhadap risiko jangka panjang dan biaya medis.");
+        if (d.bmi > 30) summary.push("Nilai BMI berada pada zona obesitas, meningkatkan kemungkinan komplikasi metabolik dan kardiovaskular.");
+        if (!summary.length) summary.push("Tidak ada temuan risiko akut, namun monitoring berkala tetap direkomendasikan.");
+
+        summaryEl.innerText = summary.join(" ");
+
+        const items = [];
+
+        if (d.smoker === "yes") {
+            items.push({
+                level: "high",
+                icon: "fa-smoking",
+                text: "Strong recommendation: program berhenti merokok terstruktur. Intervensi dini dapat menurunkan ekspektasi premi hingga 40–60% dalam 3–5 tahun."
+            });
+        }
+
+        if (d.bmi > 30) {
+            items.push({
+                level: "medium",
+                icon: "fa-weight",
+                text: "Rancang rencana penurunan berat badan gradual (5–10% dalam 12 bulan) dengan kombinasi diet, aktivitas fisik, dan monitoring klinis."
+            });
+        }
+
+        if (meta.score >= 75) {
+            items.push({
+                level: "high",
+                icon: "fa-triangle-exclamation",
+                text: "Kategori Tier-4 mengindikasikan kebutuhan rencana perawatan berkelanjutan dan koordinasi dengan dokter spesialis."
+            });
+        } else if (meta.score >= 60) {
+            items.push({
+                level: "medium",
+                icon: "fa-heart-pulse",
+                text: "Pertimbangkan paket pemeriksaan berkala setiap 6–12 bulan untuk memonitor perubahan biometrik dan faktor risiko utama."
+            });
+        } else {
+            items.push({
+                level: "low",
+                icon: "fa-check-circle",
+                text: "Profil saat ini relatif stabil. Pertahankan gaya hidup aktif, pola makan seimbang, dan cek rutin tahunan."
+            });
+        }
+
+        if (d.prediction > 20000) {
+            items.push({
+                level: "medium",
+                icon: "fa-money-bill-wave",
+                text: "Perkiraan biaya melampaui ambang high-cost (> $20.000). Konsultasikan opsi optimasi manfaat asuransi dan proteksi tambahan."
+            });
+        }
+
+        items.forEach(item => {
+            const cls =
+                item.level === "high" ? "insight-level-high" :
+                item.level === "medium" ? "insight-level-medium" :
+                "insight-level-low";
+            ul.innerHTML += `
+                <li class="${cls}">
+                    <span class="insight-icon"><i class="fas ${item.icon}"></i></span>
+                    <span>${item.text}</span>
+                </li>
+            `;
+        });
+
+        metaEl.innerText = "Generated clinical.";
+    }
+
+    renderCohort(meta) {
+        const scores = this.data.map(d => this.calculateRisk(d).score);
+        const n = scores.length;
+        const sorted = [...scores].sort((a, b) => a - b);
+        const avg = scores.reduce((a, b) => a + b, 0) / n;
+        const countBelowOrEqual = scores.filter(s => s <= meta.score).length;
+        const percentile = Math.round((countBelowOrEqual / n) * 100);
+        const aboveAvg = meta.score > avg;
+
+        document.getElementById("cohort-label").innerText =
+            `Patient berada pada kelompok risiko tertinggi dibanding populasi.`;
+        document.getElementById("cohort-subtitle").innerText =
+            `Posisi estimasi pada persentil ke-${percentile} dari total populasi tertanggung.`;
+        document.getElementById("cohort-bar-fill").style.width = percentile + "%";
+        document.getElementById("cohort-percentile-label").innerText = `Top ${percentile}%`;
+        document.getElementById("cohort-count").innerText = n.toString();
+        document.getElementById("cohort-avg-score").innerText = avg.toFixed(1);
+        document.getElementById("cohort-above-avg").innerText = aboveAvg ? "Yes" : "No";
+    }
+
+    setupSimulation(basePatient, baseMeta) {
+        const bmiSlider = document.getElementById("sim-bmi");
+        const bmiLabel = document.getElementById("sim-bmi-label");
+        const stopSmoking = document.getElementById("sim-stop-smoking");
+
+        bmiSlider.value = basePatient.bmi;
+        bmiLabel.innerText = "BMI " + basePatient.bmi;
+        stopSmoking.checked = basePatient.smoker === "yes";
+
+        const apply = () => {
+            const params = {
+                bmi: parseFloat(bmiSlider.value),
+                stopSmoking: stopSmoking.checked
+            };
+            this.updateSimulation(params);
+        };
+
+        bmiSlider.addEventListener("input", () => {
+            bmiLabel.innerText = "BMI " + bmiSlider.value;
+            apply();
+        });
+        stopSmoking.addEventListener("change", apply);
+
+        apply();
+    }
+
+    updateSimulation(params) {
+        if (!this.basePatient || !this.baseMeta || this.baseFutureCost === null) return;
+
+        const simPatient = { ...this.basePatient };
+        simPatient.bmi = params.bmi;
+        simPatient.smoker = params.stopSmoking ? "no" : this.basePatient.smoker;
+
+        const simMeta = this.calculateRisk(simPatient);
+
+        const rateInflation = 0.08;
+        const riskFactorBase = this.baseMeta.score / 2500;
+        const riskFactorSim = simMeta.score / 2500;
+
+        const totalBase = rateInflation + riskFactorBase;
+        const totalSim = rateInflation + riskFactorSim;
+
+        const baseCost = this.basePatient.prediction;
+        const simYears = [0, 1, 2, 3, 4, 5];
+        const simValues = simYears.map(y => baseCost * Math.pow(1 + totalSim, y));
+        const simFuture = simValues.at(-1);
+
+        const simRiskScore = document.getElementById("sim-risk-score");
+        const simRiskLabel = document.getElementById("sim-risk-label");
+        const simCost = document.getElementById("sim-cost");
+        const simSavings = document.getElementById("sim-savings");
+
+        simRiskScore.innerText = simMeta.score;
+        simRiskLabel.innerText = simMeta.label;
+        simCost.innerText = this.formatCurrency(simFuture);
+
+        const delta = this.baseFutureCost - simFuture;
+        const absDelta = Math.abs(delta);
+        const savingsText = (delta >= 0 ? "Potential saving " : "Potential increase ") + this.formatCurrency(absDelta);
+
+        simSavings.innerText = savingsText;
+        simSavings.classList.remove("sim-output-saving-positive", "sim-output-saving-negative");
+        if (delta > 0) simSavings.classList.add("sim-output-saving-positive");
+        else if (delta < 0) simSavings.classList.add("sim-output-saving-negative");
+    }
+}
+
+document.addEventListener("DOMContentLoaded", () => new UltimateRiskEngine());
+</script>
+
+{% endblock %}

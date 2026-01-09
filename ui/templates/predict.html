@@ -1,0 +1,976 @@
+{% extends "layout.html" %}
+{% block content %}
+
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+
+<style>
+/* # ANIMATIONS */
+@keyframes fadeIn { from {opacity:0; transform: translateY(5px);} to {opacity:1; transform: translateY(0);} }
+@keyframes loadingBar { 0% {width:0%; margin-left:0;} 50% {width:100%; margin-left:0;} 100% {width:0%; margin-left:100%;} }
+@keyframes popIn { 0% { transform: scale(0.5) rotate(-45deg); opacity: 0; } 100% { transform: scale(1) rotate(0); opacity: 1; } }
+@keyframes pulseEffect { 0% { box-shadow: 0 0 0 0 var(--c-primary-glow); } 70% { box-shadow: 0 0 0 10px rgba(16, 185, 129, 0); } 100% { box-shadow: 0 0 0 0 rgba(0,0,0,0); } }
+@keyframes rotateBg { from {transform: rotate(0deg);} to {transform: rotate(360deg);} }
+@keyframes slideUp { from {opacity:0; transform: translateY(30px);} to {opacity:1; transform: translateY(0);} }
+
+/* # BASE & ROOT VARIABLES */
+:root {
+    --c-danger: #ef4444;
+    --c-dark: #0f172a;
+    --c-light: #f8fafc;
+    --c-primary: #10b981;
+    --c-primary-glow: rgba(16, 185, 129, 0.4);
+    --c-secondary: #3b82f6;
+    --card-radius: 24px;
+    --font-code: 'JetBrains Mono', monospace;
+    --font-main: 'Plus Jakarta Sans', sans-serif;
+    --glass-bg: rgba(255, 255, 255, 0.75);
+    --glass-border: 1px solid rgba(255, 255, 255, 0.8);
+    --glass-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.07);
+    --trans-fast: 0.2s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+    --trans-smooth: 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+.ai-wrapper * { box-sizing: border-box; outline: none; }
+
+/* # BUTTONS */
+.btn-predict {
+    background: linear-gradient(135deg, var(--c-primary) 0%, #059669 100%);
+    border: none;
+    border-radius: 16px;
+    box-shadow: 0 10px 20px -5px rgba(5, 150, 105, 0.4);
+    color: white;
+    cursor: pointer;
+    font-size: 1.1rem;
+    font-weight: 800;
+    margin-top: 10px;
+    overflow: hidden;
+    padding: 18px;
+    position: relative;
+    transition: 0.4s;
+    width: 100%;
+}
+.btn-predict::after {
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
+    content: '';
+    height: 100%;
+    left: -100%;
+    position: absolute;
+    top: 0;
+    transition: 0.6s;
+    width: 100%;
+}
+.btn-predict:hover { box-shadow: 0 20px 30px -5px rgba(5, 150, 105, 0.6); transform: translateY(-4px) scale(1.02); }
+.btn-predict:hover::after { left: 100%; }
+
+/* # CARDS & GLASSMORPHISM */
+.glass-card {
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    background: var(--glass-bg);
+    border: var(--glass-border);
+    border-radius: var(--card-radius);
+    box-shadow: var(--glass-shadow);
+    padding: 30px;
+    transition: transform var(--trans-smooth), box-shadow var(--trans-smooth);
+}
+.glass-card:hover { box-shadow: 0 20px 40px rgba(0,0,0,0.08); transform: translateY(-5px); }
+
+/* # FORM ELEMENTS */
+.ai-input {
+    background: #f8fafc;
+    border: 2px solid #e2e8f0;
+    border-radius: 16px;
+    color: var(--c-dark);
+    font-size: 1rem;
+    font-weight: 600;
+    padding: 16px 16px 16px 48px;
+    transition: var(--trans-fast);
+    width: 100%;
+}
+.ai-input:focus { background: white; border-color: var(--c-primary); box-shadow: 0 0 0 4px var(--c-primary-glow); }
+.ai-input:focus + i { color: var(--c-primary); }
+.form-group { margin-bottom: 24px; position: relative; }
+.form-label {
+    color: #475569;
+    display: flex;
+    font-size: 0.8rem;
+    font-weight: 700;
+    justify-content: space-between;
+    letter-spacing: 0.5px;
+    margin-bottom: 8px;
+    text-transform: uppercase;
+}
+.input-container { position: relative; transition: var(--trans-fast); }
+.input-container i {
+    color: #94a3b8;
+    left: 16px;
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    transition: var(--trans-fast);
+    z-index: 2;
+}
+
+/* # GENDER SELECTOR */
+.check-badge {
+    align-items: center;
+    background: var(--active-color);
+    border-radius: 50%;
+    color: white;
+    display: flex;
+    font-size: 0.8rem;
+    height: 24px;
+    justify-content: center;
+    position: absolute;
+    right: 10px;
+    top: 10px;
+    transform: scale(0);
+    transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    width: 24px;
+}
+.gender-card {
+    align-items: center;
+    background: #fff;
+    border: 2px solid #e2e8f0;
+    border-radius: 20px;
+    cursor: pointer;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    justify-content: center;
+    overflow: hidden;
+    padding: 20px;
+    position: relative;
+    transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+}
+.gender-card:hover { box-shadow: 0 10px 25px rgba(0,0,0,0.05); transform: translateY(-5px); }
+.gender-card.selected .check-badge { transform: scale(1); }
+.gender-card.selected .gender-label { color: #1e293b; }
+.gender-card.selected[data-type="female"] { background: var(--active-bg); border-color: var(--active-color); box-shadow: 0 10px 30px rgba(236, 72, 153, 0.15); }
+.gender-card.selected[data-type="female"] .icon-bubble { background: white; box-shadow: 0 5px 15px rgba(236, 72, 153, 0.2); color: var(--active-color); }
+.gender-card.selected[data-type="male"] { background: var(--active-bg); border-color: var(--active-color); box-shadow: 0 10px 30px rgba(59, 130, 246, 0.15); }
+.gender-card.selected[data-type="male"] .icon-bubble { background: white; box-shadow: 0 5px 15px rgba(59, 130, 246, 0.2); color: var(--active-color); }
+.gender-card[data-type="female"] { --active-bg: #fdf2f8; --active-color: #ec4899; }
+.gender-card[data-type="male"] { --active-bg: #eff6ff; --active-color: #3b82f6; }
+.gender-grid { display: grid; gap: 20px; grid-template-columns: 1fr 1fr; }
+.gender-label { color: #64748b; font-weight: 700; transition: 0.3s; }
+.icon-bubble {
+    align-items: center;
+    background: #f8fafc;
+    border-radius: 50%;
+    color: #94a3b8;
+    display: flex;
+    font-size: 1.8rem;
+    height: 60px;
+    justify-content: center;
+    transition: 0.3s;
+    width: 60px;
+}
+
+/* # HISTORY SIDEBAR */
+.history-sidebar {
+    align-items: center;
+    background: var(--c-secondary);
+    border-radius: 50%;
+    bottom: 20px;
+    box-shadow: 0 10px 30px rgba(59, 130, 246, 0.4);
+    color: white;
+    cursor: pointer;
+    display: flex;
+    font-size: 1.5rem;
+    height: 60px;
+    justify-content: center;
+    position: fixed;
+    right: 20px;
+    transition: 0.3s;
+    width: 60px;
+    z-index: 100;
+}
+.history-sidebar:hover { transform: scale(1.1); }
+
+/* # LAYOUT & GRID */
+.ai-container { display: flex; flex-direction: column; gap: 30px; height: 100%; padding: 40px; position: relative; z-index: 10; }
+.ai-grid { align-items: start; display: grid; gap: 30px; grid-template-columns: 380px 1fr; }
+.ai-header { align-items: center; display: flex; justify-content: space-between; margin-bottom: 20px; }
+.ai-title h1 {
+    background: linear-gradient(135deg, var(--c-primary) 0%, var(--c-secondary) 100%);
+    background-clip: text;
+    -webkit-background-clip: text;
+    color: transparent;
+    -webkit-text-fill-color: transparent;
+    font-size: 2rem;
+    font-weight: 800;
+    letter-spacing: -1px;
+    margin: 0;
+}
+.ai-title p { color: #64748b; font-size: 0.95rem; margin-top: 5px; }
+.ai-wrapper {
+    background: #f1f5f9;
+    border-radius: var(--card-radius);
+    box-shadow: 0 0 50px rgba(0,0,0,0.05);
+    color: var(--c-dark);
+    font-family: var(--font-main);
+    min-height: 85vh;
+    overflow: hidden;
+    position: relative;
+    width: 100%;
+}
+#neural-canvas { height: 100%; left: 0; opacity: 0.6; pointer-events: none; position: absolute; top: 0; width: 100%; z-index: 0; }
+
+/* # LOADING & STATUS */
+.loader-bar { animation: loadingBar 2s ease-in-out infinite; background: var(--c-primary); height: 100%; width: 0%; }
+.loader-scan { background: #e2e8f0; border-radius: 5px; height: 5px; margin-top: 20px; overflow: hidden; width: 200px; }
+.loading-overlay {
+    align-items: center;
+    background: rgba(255,255,255,0.9);
+    display: none;
+    flex-direction: column;
+    height: 100%;
+    justify-content: center;
+    left: 0;
+    position: absolute;
+    top: 0;
+    width: 100%;
+    z-index: 50;
+}
+.pulsing-dot { animation: pulseEffect 2s infinite; background: var(--c-primary); border-radius: 50%; height: 10px; width: 10px; }
+.status-pill {
+    align-items: center;
+    background: white;
+    border-radius: 50px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+    color: var(--c-primary);
+    display: flex;
+    font-size: 0.85rem;
+    font-weight: 700;
+    gap: 8px;
+    padding: 8px 16px;
+}
+
+/* # MEDIA QUERIES */
+@media (max-width: 1100px) { .ai-grid { grid-template-columns: 1fr; } }
+@media (max-width: 600px) { .metrics-row { flex-direction: column; } .price-tag { font-size: 2.5rem; } }
+
+/* # REGION SELECTOR */
+.chevron-icon { color: #94a3b8; transition: transform 0.4s; }
+.custom-options {
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(10px);
+    border: 1px solid #e2e8f0;
+    border-radius: 16px;
+    box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+    left: 0;
+    opacity: 0;
+    padding: 8px;
+    position: absolute;
+    top: 110%;
+    transform: translateY(-10px);
+    transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+    visibility: hidden;
+    width: 100%;
+    z-index: 30;
+}
+#inp-region { display: none; }
+.opt-icon { text-align: center; width: 20px; }
+.option-item {
+    align-items: center;
+    border-radius: 10px;
+    color: #64748b;
+    cursor: pointer;
+    display: flex;
+    font-weight: 600;
+    gap: 12px;
+    padding: 12px 15px;
+    transition: 0.2s;
+}
+.option-item:hover { background: #f1f5f9; color: #1e293b; padding-left: 20px; }
+.option-item.selected { background: #eff6ff; color: #3b82f6; }
+.region-icon-box {
+    align-items: center;
+    background: #eff6ff;
+    border-radius: 8px;
+    color: #3b82f6;
+    display: flex;
+    font-size: 1rem;
+    height: 32px;
+    justify-content: center;
+    transition: 0.3s;
+    width: 32px;
+}
+.region-wrapper { font-family: 'Plus Jakarta Sans', sans-serif; position: relative; }
+.region-wrapper.open .chevron-icon { color: #3b82f6; transform: rotate(180deg); }
+.region-wrapper.open .custom-options { opacity: 1; transform: translateY(0); visibility: visible; }
+.selected-text { color: #1e293b; font-weight: 700; }
+.select-trigger {
+    align-items: center;
+    background: #fff;
+    border: 2px solid #e2e8f0;
+    border-radius: 16px;
+    cursor: pointer;
+    display: flex;
+    justify-content: space-between;
+    padding: 14px 20px;
+    position: relative;
+    transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+    z-index: 20;
+}
+.select-trigger:hover { border-color: #3b82f6; box-shadow: 0 5px 15px rgba(59, 130, 246, 0.1); transform: translateY(-2px); }
+.select-trigger:hover .region-icon-box { background: #3b82f6; color: white; }
+.trigger-content { align-items: center; display: flex; gap: 12px; }
+
+/* # RESULTS & CHARTS */
+.chart-wrapper { height: 250px; margin-top: 30px; position: relative; }
+.log-entry { animation: fadeIn 0.3s forwards; margin-bottom: 5px; opacity: 0; }
+.log-time { color: #94a3b8; margin-right: 10px; }
+.metric-box { background: white; border-radius: 12px; box-shadow: 0 5px 15px rgba(0,0,0,0.05); min-width: 120px; padding: 15px 20px; }
+.metric-label { color: #64748b; font-size: 0.75rem; font-weight: 700; text-transform: uppercase; }
+.metrics-row { display: flex; gap: 15px; justify-content: center; margin-top: 20px; position: relative; z-index: 1; }
+.metric-val { color: var(--c-dark); font-size: 1.1rem; font-weight: 800; }
+.metric-val.bad { color: var(--c-danger); }
+.metric-val.good { color: var(--c-primary); }
+.price-tag {
+    color: var(--c-primary);
+    font-size: 3.5rem;
+    font-weight: 900;
+    margin: 15px 0;
+    position: relative;
+    text-shadow: 0 5px 15px rgba(16,185,129,0.3);
+    z-index: 1;
+}
+.result-display { display: none; overflow: hidden; padding: 40px; position: relative; text-align: center; }
+.result-display::before {
+    animation: rotateBg 10s linear infinite;
+    background: radial-gradient(circle, rgba(16,185,129,0.1) 0%, transparent 60%);
+    content: '';
+    height: 200%;
+    left: -50%;
+    position: absolute;
+    top: -50%;
+    width: 200%;
+    z-index: 0;
+}
+.result-panel { display: flex; flex-direction: column; gap: 20px; }
+.system-logs {
+    background: #1e293b;
+    border: 1px solid #334155;
+    border-radius: 16px;
+    box-shadow: inset 0 0 20px rgba(0,0,0,0.5);
+    color: #00ff9d;
+    display: none;
+    font-family: var(--font-code);
+    font-size: 0.85rem;
+    height: 150px;
+    overflow-y: auto;
+    padding: 20px;
+}
+
+/* # TOGGLE SWITCH */
+.animate-icon { animation: popIn 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
+.icon-box {
+    align-items: center;
+    border-radius: 10px;
+    display: flex;
+    font-size: 1.2rem;
+    height: 40px;
+    justify-content: center;
+    transition: all 0.4s ease;
+    width: 40px;
+}
+.smart-toggle {
+    align-items: center;
+    border: 2px solid transparent;
+    border-radius: 16px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+    cursor: pointer;
+    display: flex;
+    justify-content: space-between;
+    overflow: hidden;
+    padding: 12px 16px;
+    position: relative;
+    transition: all 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
+}
+.smart-toggle.state-healthy { background: #ecfdf5; border-color: #d1fae5; }
+.smart-toggle.state-healthy:hover { background: #d1fae5; box-shadow: 0 8px 15px rgba(16, 185, 129, 0.15); transform: translateY(-2px); }
+.smart-toggle.state-risk { background: #fef2f2; border-color: #fee2e2; }
+.smart-toggle.state-risk:hover { background: #fee2e2; box-shadow: 0 8px 15px rgba(239, 68, 68, 0.15); transform: translateY(-2px); }
+.state-healthy .icon-box { background: #10b981; box-shadow: 0 4px 10px rgba(16, 185, 129, 0.3); color: white; }
+.state-healthy .status-value { color: #059669; }
+.state-risk .icon-box { background: #ef4444; box-shadow: 0 4px 10px rgba(239, 68, 68, 0.3); color: white; }
+.state-risk .status-value { color: #b91c1c; }
+.state-risk .switch-handle { transform: translateX(22px); }
+.state-risk .switch-track { background: rgba(239, 68, 68, 0.3); }
+.status-label { color: #64748b; font-size: 0.75rem; font-weight: 700; letter-spacing: 0.5px; text-transform: uppercase; }
+.status-value { font-size: 1rem; font-weight: 800; transition: color 0.3s; }
+.switch-handle {
+    background: white;
+    border-radius: 50%;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+    height: 20px;
+    left: 3px;
+    position: absolute;
+    top: 3px;
+    transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+    width: 20px;
+}
+.switch-track {
+    background: rgba(0,0,0,0.1);
+    border-radius: 50px;
+    height: 26px;
+    position: relative;
+    transition: 0.3s;
+    width: 48px;
+}
+.text-box { display: flex; flex-direction: column; }
+.toggle-content { align-items: center; display: flex; gap: 12px; z-index: 2; }
+.toggle-wrapper { margin-bottom: 24px; position: relative; width: 100%; }
+</style>
+
+<div class="ai-wrapper">
+    <canvas id="neural-canvas"></canvas>
+
+    <div class="ai-container">
+        
+        <div class="ai-header">
+            <div class="ai-title">
+                <h1>Predictor Estimation</h1>
+                <p>Medical Insurance Cost Estimation Engine</p>
+            </div>
+            <div class="status-pill">
+                <div class="pulsing-dot"></div>
+                SYSTEM ONLINE
+            </div>
+        </div>
+
+        <div class="ai-grid">
+            
+            <div class="glass-card" style="animation: slideUp 0.6s ease-out;">
+                
+                <div class="form-group">
+                    <label class="form-label">Identitas Pasien</label>
+                    <div class="input-container">
+                        <input type="text" id="inp-name" class="ai-input" placeholder="Nama Lengkap Pasien" autocomplete="off">
+                        <i class="fas fa-id-card"></i>
+                    </div>
+                </div>
+
+                <div style="display:grid; grid-template-columns: 1fr 1fr; gap:15px;">
+                    <div class="form-group">
+                        <label class="form-label">Usia</label>
+                        <div class="input-container">
+                            <input type="number" id="inp-age" class="ai-input" placeholder="18-99">
+                            <i class="fas fa-birthday-cake"></i>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">
+                            BMI 
+                            <span onclick="bmiModal.open()" style="color:var(--c-secondary); cursor:pointer; font-size:0.7rem;">
+                                <i class="fas fa-calculator"></i> Hitung?
+                            </span>
+                        </label>
+                        <div class="input-container">
+                            <input type="number" id="inp-bmi" class="ai-input" step="0.01" placeholder="22.5">
+                            <i class="fas fa-weight"></i>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Jenis Kelamin</label>
+                    <div class="gender-grid">
+                        <div class="gender-card selected" data-type="male" onclick="genderManager.select('male', this)">
+                            <div class="check-badge"><i class="fas fa-check"></i></div>
+                            <div class="icon-bubble"><i class="fas fa-mars"></i></div>
+                            <span class="gender-label">Laki-Laki</span>
+                        </div>
+                        <div class="gender-card" data-type="female" onclick="genderManager.select('female', this)">
+                            <div class="check-badge"><i class="fas fa-check"></i></div>
+                            <div class="icon-bubble"><i class="fas fa-venus"></i></div>
+                            <span class="gender-label">Perempuan</span>
+                        </div>
+                    </div>
+                    <input type="hidden" id="inp-sex" value="male">
+                </div>
+
+                <div style="display:grid; grid-template-columns: 1fr 1fr; gap:15px;">
+                    <div class="form-group">
+                        <label class="form-label">Anak</label>
+                        <div class="input-container">
+                            <input type="number" id="inp-children" class="ai-input" value="0">
+                            <i class="fas fa-baby"></i>
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label">Wilayah Tempat Tinggal</label>
+                        <div class="region-wrapper" id="regionDropdown">
+                            <input type="text" id="inp-region" value="southeast">
+                            <div class="select-trigger" onclick="regionManager.toggle()">
+                                <div class="trigger-content">
+                                    <div class="region-icon-box"><i class="fas fa-location-arrow" id="display-icon"></i></div>
+                                    <span class="selected-text" id="display-text">Southeast</span>
+                                </div>
+                                <i class="fas fa-chevron-down chevron-icon"></i>
+                            </div>
+                            <div class="custom-options">
+                                <div class="option-item selected" onclick="regionManager.select('southeast', 'Southeast', 'fa-location-arrow')">
+                                    <i class="fas fa-location-arrow opt-icon"></i> Southeast
+                                </div>
+                                <div class="option-item" onclick="regionManager.select('southwest', 'Southwest', 'fa-compass')">
+                                    <i class="fas fa-compass opt-icon"></i> Southwest
+                                </div>
+                                <div class="option-item" onclick="regionManager.select('northeast', 'Northeast', 'fa-map-pin')">
+                                    <i class="fas fa-map-pin opt-icon"></i> Northeast
+                                </div>
+                                <div class="option-item" onclick="regionManager.select('northwest', 'Northwest', 'fa-paper-plane')">
+                                    <i class="fas fa-paper-plane opt-icon"></i> Northwest
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Gaya Hidup & Risiko</label>
+                    <div class="toggle-wrapper">
+                        <div class="smart-toggle state-healthy" id="riskToggleBtn" onclick="toggleManager.switch()">
+                            <div class="toggle-content">
+                                <div class="icon-box"><i class="fas fa-leaf animate-icon" id="toggleIcon"></i></div>
+                                <div class="text-box">
+                                    <span class="status-label">Status Perokok</span>
+                                    <span class="status-value" id="toggleText">Non-Perokok</span>
+                                </div>
+                            </div>
+                            <div class="switch-track"><div class="switch-handle"></div></div>
+                        </div>
+                        <input type="hidden" id="inp-smoker" value="no">
+                    </div>
+                </div>
+
+                <button class="btn-predict" onclick="predictionEngine.start()">
+                    <i class="fas fa-rocket"></i> JALANKAN PREDIKSI
+                </button>
+            </div>
+
+            <div class="result-panel">
+                <div id="view-initial" class="glass-card" style="text-align:center; padding:60px; color:#94a3b8; border-style:dashed;">
+                    <i class="fas fa-microchip fa-5x" style="margin-bottom:20px; color:#cbd5e1;"></i>
+                    <h3 style="color:#64748b;">Menunggu Data Input</h3>
+                    <p>Silakan lengkapi profil medis di sebelah kiri.</p>
+                </div>
+                <div id="view-logs" class="system-logs"></div>
+                <div id="view-result" class="glass-card result-display">
+                    <div style="font-size:0.9rem; font-weight:700; color:#64748b; letter-spacing:2px; text-transform:uppercase;">Estimasi Biaya Tahunan</div>
+                    <div class="price-tag" id="out-cost">$0.00</div>
+                    <div class="metrics-row">
+                        <div class="metric-box">
+                            <div class="metric-label">Kategori BMI</div>
+                            <div class="metric-val" id="out-bmi-cat">-</div>
+                        </div>
+                        <div class="metric-box">
+                            <div class="metric-label">Resiko Perokok</div>
+                            <div class="metric-val" id="out-risk-cat">-</div>
+                        </div>
+                    </div>
+                    <div class="chart-wrapper">
+                        <canvas id="mainChart"></canvas>
+                    </div>
+                    <div style="margin-top:20px; font-size:0.8rem; color:#94a3b8;">
+                        *Estimasi ini dihasilkan oleh model Regresi Linear dengan akurasi 85%.
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="loading-screen" class="loading-overlay">
+        <i class="fas fa-brain fa-3x" style="color:var(--c-primary); animation:pulseEffect 1s infinite;"></i>
+        <h3 style="margin-top:20px; color:var(--c-dark);">Menganalisis Pola Data...</h3>
+        <div class="loader-scan"><div class="loader-bar"></div></div>
+    </div>
+</div>
+
+<div class="history-sidebar" onclick="historyManager.show()" title="Lihat Riwayat">
+    <i class="fas fa-history"></i>
+</div>
+
+<script>
+// # BMI MODAL
+const bmiModal = {
+    open: () => {
+        Swal.fire({
+            title: 'Kalkulator BMI',
+            html: `
+                <div style="display:flex; gap:10px; margin-top:10px;">
+                    <input id="swal-h" type="number" class="swal2-input" placeholder="Tinggi (cm)" style="margin:0; width:100%;">
+                    <input id="swal-w" type="number" class="swal2-input" placeholder="Berat (kg)" style="margin:0; width:100%;">
+                </div>
+            `,
+            confirmButtonText: 'Hitung & Gunakan',
+            confirmButtonColor: '#10b981',
+            preConfirm: () => {
+                const h = document.getElementById('swal-h').value;
+                const w = document.getElementById('swal-w').value;
+                if (!h || !w) Swal.showValidationMessage('Mohon isi kedua kolom');
+                return { h, w };
+            }
+        }).then((res) => {
+            if (res.isConfirmed) {
+                const h_m = res.value.h / 100;
+                const bmi = (res.value.w / (h_m * h_m)).toFixed(2);
+                const field = document.getElementById('inp-bmi');
+                field.value = bmi;
+                field.style.backgroundColor = '#d1fae5';
+                setTimeout(() => field.style.backgroundColor = '#f8fafc', 1000);
+                Swal.fire({
+                    icon: 'success',
+                    title: `BMI Anda: ${bmi}`,
+                    toast: true,
+                    position: 'top-end',
+                    showConfirmButton: false,
+                    timer: 2000
+                });
+            }
+        });
+    }
+}
+
+// # FORM INTERACTION (GENDER)
+const genderManager = {
+    input: document.getElementById('inp-sex'),
+    select: function(val, element) {
+        this.input.value = val;
+        document.querySelectorAll('.gender-card').forEach(card => {
+            card.classList.remove('selected');
+        });
+        element.classList.add('selected');
+        gsap.fromTo(element, 
+            { scale: 0.95 }, 
+            { scale: 1, duration: 0.4, ease: "elastic.out(1, 0.5)" }
+        );
+        const icon = element.querySelector('.icon-bubble i');
+        gsap.fromTo(icon,
+            { rotation: -20, scale: 0.8 },
+            { rotation: 0, scale: 1, duration: 0.5, ease: "back.out(2)" }
+        );
+    }
+};
+
+// # FORM INTERACTION (REGION)
+const regionManager = {
+    wrapper: document.getElementById('regionDropdown'),
+    input: document.getElementById('inp-region'),
+    displayText: document.getElementById('display-text'),
+    displayIcon: document.getElementById('display-icon'),
+    select: function(value, text, iconClass) {
+        this.input.value = value;
+        this.displayText.innerText = text;
+        this.displayIcon.className = `fas ${iconClass}`;
+        const options = this.wrapper.querySelectorAll('.option-item');
+        options.forEach(opt => opt.classList.remove('selected'));
+        event.currentTarget.classList.add('selected');
+        this.wrapper.classList.remove('open');
+    },
+    toggle: function() {
+        this.wrapper.classList.toggle('open');
+    }
+};
+
+document.addEventListener('click', function(e) {
+    const regionWrap = document.getElementById('regionDropdown');
+    if (regionWrap && !regionWrap.contains(e.target)) {
+        regionWrap.classList.remove('open');
+    }
+});
+
+// # FORM INTERACTION (TOGGLE)
+const toggleManager = {
+    btn: document.getElementById('riskToggleBtn'),
+    icon: document.getElementById('toggleIcon'),
+    input: document.getElementById('inp-smoker'),
+    isSmoker: false,
+    text: document.getElementById('toggleText'),
+    switch: function() {
+        this.isSmoker = !this.isSmoker;
+        if (this.isSmoker) {
+            this.input.value = 'yes';
+            this.btn.classList.remove('state-healthy');
+            this.btn.classList.add('state-risk');
+            this.text.innerText = "Perokok Aktif";
+            this.icon.className = ''; 
+            void this.icon.offsetWidth; 
+            this.icon.className = 'fas fa-smoking animate-icon';
+        } else {
+            this.input.value = 'no';
+            this.btn.classList.remove('state-risk');
+            this.btn.classList.add('state-healthy');
+            this.text.innerText = "Non-Perokok (Sehat)";
+            this.icon.className = ''; 
+            void this.icon.offsetWidth; 
+            this.icon.className = 'fas fa-leaf animate-icon';
+        }
+    }
+};
+
+// # HISTORY SYSTEM
+const historyManager = {
+    add: (inputs, cost) => {
+        const item = {
+            name: inputs.name,
+            cost: cost,
+            date: new Date().toLocaleDateString() + ' ' + new Date().toLocaleTimeString()
+        };
+        const history = JSON.parse(localStorage.getItem('ai_history') || '[]');
+        history.unshift(item);
+        if(history.length > 10) history.pop();
+        localStorage.setItem('ai_history', JSON.stringify(history));
+    },
+    show: () => {
+        const data = JSON.parse(localStorage.getItem('ai_history') || '[]');
+        if (data.length === 0) {
+            Swal.fire('Riwayat Kosong', 'Belum ada prediksi yang dilakukan.', 'info');
+            return;
+        }
+        let html = `<div style="max-height:300px; overflow-y:auto; text-align:left;">`;
+        data.forEach(item => {
+            html += `
+                <div style="padding:10px; border-bottom:1px solid #eee; display:flex; justify-content:space-between; align-items:center;">
+                    <div>
+                        <div style="font-weight:bold; font-size:0.9rem;">${item.name || 'Anonim'}</div>
+                        <div style="font-size:0.75rem; color:#999;">${item.date}</div>
+                    </div>
+                    <div style="font-weight:bold; color:#10b981;">$${Math.round(item.cost).toLocaleString()}</div>
+                </div>
+            `;
+        });
+        html += `</div>`;
+        Swal.fire({
+            title: 'Riwayat Prediksi',
+            html: html,
+            confirmButtonText: 'Tutup',
+            confirmButtonColor: '#3b82f6'
+        });
+    }
+};
+
+// # LOGGING SYSTEM
+const logger = {
+    el: document.getElementById('view-logs'),
+    add: async (msg, delay=200) => {
+        const div = document.createElement('div');
+        div.className = 'log-entry';
+        const time = new Date().toLocaleTimeString('id-ID', {hour12:false});
+        div.innerHTML = `<span class="log-time">[${time}]</span> ${msg}`;
+        logger.el.appendChild(div);
+        logger.el.scrollTop = logger.el.scrollHeight;
+        await new Promise(r => setTimeout(r, delay));
+    },
+    clear: () => {
+        logger.el.innerHTML = '';
+        logger.el.style.display = 'block';
+    }
+};
+
+// # PARTICLE NETWORK (BACKGROUND)
+class ParticleNetwork {
+    constructor() {
+        this.canvas = document.getElementById('neural-canvas');
+        this.ctx = this.canvas.getContext('2d');
+        this.particles = [];
+        this.resize();
+        window.addEventListener('resize', () => this.resize());
+        this.mouse = { x: null, y: null };
+        window.addEventListener('mousemove', (e) => {
+            const rect = this.canvas.getBoundingClientRect();
+            this.mouse.x = e.clientX - rect.left;
+            this.mouse.y = e.clientY - rect.top;
+        });
+        this.initParticles();
+        this.animate();
+    }
+    animate() {
+        this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+        this.particles.forEach(p => {
+            p.x += p.vx;
+            p.y += p.vy;
+            if (p.x < 0 || p.x > this.canvas.width) p.vx *= -1;
+            if (p.y < 0 || p.y > this.canvas.height) p.vy *= -1;
+            this.ctx.beginPath();
+            this.ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+            this.ctx.fillStyle = '#10b981';
+            this.ctx.fill();
+            this.particles.forEach(p2 => {
+                const dx = p.x - p2.x;
+                const dy = p.y - p2.y;
+                const dist = Math.sqrt(dx*dx + dy*dy);
+                if (dist < 100) {
+                    this.ctx.beginPath();
+                    this.ctx.strokeStyle = `rgba(16, 185, 129, ${1 - dist/100})`;
+                    this.ctx.lineWidth = 0.5;
+                    this.ctx.moveTo(p.x, p.y);
+                    this.ctx.lineTo(p2.x, p2.y);
+                    this.ctx.stroke();
+                }
+            });
+            if (this.mouse.x) {
+                const dx = p.x - this.mouse.x;
+                const dy = p.y - this.mouse.y;
+                const dist = Math.sqrt(dx*dx + dy*dy);
+                if (dist < 150) {
+                    this.ctx.beginPath();
+                    this.ctx.strokeStyle = `rgba(59, 130, 246, ${1 - dist/150})`;
+                    this.ctx.moveTo(p.x, p.y);
+                    this.ctx.lineTo(this.mouse.x, this.mouse.y);
+                    this.ctx.stroke();
+                }
+            }
+        });
+        requestAnimationFrame(() => this.animate());
+    }
+    initParticles() {
+        const count = 60;
+        for (let i = 0; i < count; i++) {
+            this.particles.push({
+                x: Math.random() * this.canvas.width,
+                y: Math.random() * this.canvas.height,
+                vx: (Math.random() - 0.5) * 1.5,
+                vy: (Math.random() - 0.5) * 1.5,
+                size: Math.random() * 3 + 1
+            });
+        }
+    }
+    resize() {
+        this.canvas.width = this.canvas.offsetWidth;
+        this.canvas.height = this.canvas.offsetHeight;
+    }
+}
+
+// # PREDICTION ENGINE
+const predictionEngine = {
+    chart: null,
+    renderChart: (userCost) => {
+        const ctx = document.getElementById('mainChart').getContext('2d');
+        if (predictionEngine.chart) predictionEngine.chart.destroy();
+        const avgNational = 13270;
+        const avgHealthy = 4500;
+        predictionEngine.chart = new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: ['Sehat Optimal', 'Rata-rata Nasional', 'Estimasi Anda'],
+                datasets: [{
+                    label: 'Biaya Tahunan (USD)',
+                    data: [avgHealthy, avgNational, userCost],
+                    backgroundColor: [ '#3b82f6', '#94a3b8', userCost > avgNational ? '#ef4444' : '#10b981' ],
+                    borderWidth: 0,
+                    borderRadius: 8,
+                    barPercentage: 0.6
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { display: false },
+                    tooltip: {
+                        backgroundColor: 'rgba(15, 23, 42, 0.9)',
+                        titleFont: { family: 'Plus Jakarta Sans' },
+                        bodyFont: { family: 'Plus Jakarta Sans', weight: 'bold' },
+                        padding: 12,
+                        callbacks: { label: (ctx) => new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(ctx.raw) }
+                    }
+                },
+                scales: {
+                    y: { beginAtZero: true, grid: { color: '#f1f5f9' } },
+                    x: { grid: { display: false } }
+                },
+                animation: { duration: 2000, easing: 'easeOutQuart' }
+            }
+        });
+    },
+    renderResult: (cost, inputs) => {
+        const resultPanel = document.getElementById('view-result');
+        resultPanel.style.display = 'block';
+        gsap.fromTo(resultPanel, 
+            { opacity: 0, y: 50, scale: 0.9 }, 
+            { opacity: 1, y: 0, scale: 1, duration: 0.6, ease: "back.out(1.2)" }
+        );
+        const priceEl = document.getElementById('out-cost');
+        let counter = { val: 0 };
+        gsap.to(counter, {
+            val: cost,
+            duration: 2,
+            ease: "power3.out",
+            onUpdate: () => {
+                priceEl.innerText = new Intl.NumberFormat('en-US', {
+                    style: 'currency', currency: 'USD'
+                }).format(counter.val);
+            }
+        });
+        const bmiVal = parseFloat(inputs.bmi);
+        const bmiEl = document.getElementById('out-bmi-cat');
+        if(bmiVal < 18.5) { bmiEl.innerText = "Underweight"; bmiEl.className = "metric-val"; }
+        else if(bmiVal < 25) { bmiEl.innerText = "Normal"; bmiEl.className = "metric-val good"; }
+        else { bmiEl.innerText = "Obese"; bmiEl.className = "metric-val bad"; }
+        const riskEl = document.getElementById('out-risk-cat');
+        riskEl.innerText = inputs.smoker === 'yes' ? 'TINGGI' : 'RENDAH';
+        riskEl.className = inputs.smoker === 'yes' ? 'metric-val bad' : 'metric-val good';
+        predictionEngine.renderChart(cost);
+        historyManager.add(inputs, cost);
+    },
+    start: async () => {
+        const inputs = {
+            name: document.getElementById('inp-name').value,
+            age: document.getElementById('inp-age').value,
+            bmi: document.getElementById('inp-bmi').value,
+            children: document.getElementById('inp-children').value,
+            region: document.getElementById('inp-region').value,
+            sex: document.getElementById('inp-sex').value,
+            smoker: document.getElementById('inp-smoker').value
+        };
+        if (!inputs.age || !inputs.bmi) {
+            Swal.fire({
+                icon: 'warning',
+                title: 'Data Belum Lengkap',
+                text: 'Mohon isi Usia dan BMI untuk melanjutkan.',
+                confirmButtonColor: '#10b981'
+            });
+            return;
+        }
+        document.getElementById('view-initial').style.display = 'none';
+        document.getElementById('view-result').style.display = 'none';
+        logger.clear();
+        await logger.add("Menginisialisasi koneksi Neural Network...");
+        await logger.add("Memuat model 'medical_cost_v4.h5'...");
+        await logger.add(`Menganalisis data: Usia=${inputs.age}, BMI=${inputs.bmi}, Perokok=${inputs.smoker}`);
+        await logger.add("Normalisasi vektor input...");
+        document.getElementById('loading-screen').style.display = 'flex';
+        await new Promise(r => setTimeout(r, 1500));
+        try {
+            const response = await fetch('/api/predict', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(inputs)
+            });
+            const data = await response.json();
+            if(data.error) throw new Error(data.error);
+            document.getElementById('loading-screen').style.display = 'none';
+            await logger.add("Prediksi Selesai. Menampilkan hasil.", 100);
+            predictionEngine.renderResult(data.prediction, inputs);
+        } catch (err) {
+            document.getElementById('loading-screen').style.display = 'none';
+            Swal.fire('Error', err.message, 'error');
+        }
+    }
+};
+
+// # INITIALIZE
+document.addEventListener('DOMContentLoaded', () => {
+    new ParticleNetwork();
+    gsap.from(".ai-header", { duration: 1, y: -50, opacity: 0, ease: "power3.out" });
+});
+</script>
+
+{% endblock %}

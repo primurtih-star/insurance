@@ -1,0 +1,369 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ title or "Actuarial Predictor" }}</title>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/countup.js/1.9.3/countUp.min.js"></script>
+    <style>
+        :root {
+            --primary: #059669;
+            --primary-light: #10b981;
+            --primary-bg: #ecfdf5;      
+            --primary-glow: rgba(5, 150, 105, 0.5);
+            --accent-blue: #3b82f6;    
+            --dark-bg: #1e293b;    
+            --text-main: #0f172a;
+            --text-muted: #64748b;
+            --border-color: #e2e8f0;
+            --surface-color: #ffffff;
+      
+            --sidebar-width: 280px; 
+            --header-height: 70px;
+            --radius-lg: 16px;
+            --radius-md: 10px;
+ 
+            --glass-bg: rgba(255, 255, 255, 0.95);
+            --shadow-soft: 0 10px 30px -5px rgba(0, 0, 0, 0.08);
+            --transition-speed: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Plus Jakarta Sans', sans-serif; }
+        html, body { min-height: 100vh; overflow-x: hidden; }
+        body {
+            background: linear-gradient(135deg, #f0fdf4 0%, #f8fafc 100%); 
+            color: var(--text-main);
+            display: flex;
+        }
+
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+        ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+  
+        .d-flex { display: flex; }
+        .flex-col { flex-direction: column; }
+        .justify-center { justify-content: center; }
+        .justify-between { justify-content: space-between; }
+        .items-center { align-items: center; }
+        .gap-1 { gap: 0.25rem; }
+        .gap-2 { gap: 0.5rem; }
+        .gap-4 { gap: 1rem; }
+        .p-4 { padding: 1rem; }
+        .px-6 { padding-left: 1.5rem; padding-right: 1.5rem; }
+        .py-4 { padding-top: 1rem; padding-bottom: 1rem; }
+        .mt-4 { margin-top: 1rem; }
+        .mb-6 { margin-bottom: 1.5rem; }
+        .w-full { width: 100%; }
+        .h-full { height: 100%; }
+        .bg-white { background-color: var(--surface-color); }
+        .shadow-md { box-shadow: var(--shadow-soft); }
+        .rounded-xl { border-radius: var(--radius-lg); }
+        .rounded-md { border-radius: var(--radius-md); }
+        .border { border: 1px solid var(--border-color); }
+        .border-primary { border-color: var(--primary); }
+        
+        .text-xs { font-size: 0.75rem; }
+        .text-sm { font-size: 0.875rem; }
+        .text-lg { font-size: 1.125rem; }
+        .text-xl { font-size: 1.25rem; }
+        .font-bold { font-weight: 700; }
+        .font-extrabold { font-weight: 800; }
+        .text-primary { color: var(--primary); }
+        .text-muted { color: var(--text-muted); }
+        .text-center { text-align: center; }
+
+        .sidebar {
+            width: var(--sidebar-width);
+            background: var(--glass-bg); 
+            backdrop-filter: blur(16px);
+            height: 100vh;
+            position: fixed;
+            top: 0; left: 0;
+            border-right: 1px solid rgba(0,0,0,0.05);
+            display: flex; flex-direction: column;
+            z-index: 1000;
+            transition: transform var(--transition-speed);
+            box-shadow: 10px 0 40px rgba(0,0,0,0.03);
+            overflow-y: auto;
+        }
+
+        .brand-box {
+            padding: 25px; display: flex; align-items: center; gap: 15px;
+            border-bottom: 1px solid rgba(0,0,0,0.05);
+        }
+        
+        .brand-logo {
+            width: 44px; height: 44px;
+            background: linear-gradient(135deg, var(--primary), var(--primary-light));
+            border-radius: var(--radius-md);
+            display: flex; align-items: center; justify-content: center;
+            color: white; font-size: 1.25rem;
+            box-shadow: 0 0 10px rgba(5, 150, 105, 0.4);
+            animation: pulse-logo 3s infinite;
+        }
+        .brand-text h1 { font-size: 1.25rem; font-weight: 800; letter-spacing: -0.5px; color: var(--dark-bg); line-height: 1.2; }
+        .brand-text span { font-size: 0.7rem; color: var(--text-muted); font-weight: 700; text-transform: uppercase; letter-spacing: 1.5px; display: block; margin-top: 2px; }
+
+        .nav-links { flex: 1; padding: 10px 20px; }
+        
+        .nav-category {
+            font-size: 0.7rem; text-transform: uppercase; color: #94a3b8;
+            margin: 25px 0 10px 10px; font-weight: 800; letter-spacing: 1.2px;
+        }
+
+        .nav-item {
+            display: flex; align-items: center; gap: 15px;
+            padding: 12px 15px; 
+            margin-bottom: 10px;
+            border-radius: var(--radius-md);
+            color: var(--text-muted); text-decoration: none; font-weight: 600;
+            position: relative; transition: all var(--transition-speed);
+        }
+
+        .nav-item:hover {
+            background: rgba(5, 150, 105, 0.05);
+            color: var(--primary);
+            transform: translateX(3px);
+            box-shadow: 0 4px 8px rgba(5, 150, 105, 0.05);
+        }
+
+        .nav-item.active {
+            background: linear-gradient(90deg, var(--primary-bg), rgba(5, 150, 105, 0.02)); 
+            color: var(--primary);
+            font-weight: 700;
+        }
+        
+        .nav-item.active::before {
+            content: ''; position: absolute; left: 0; top: 15%; height: 70%; width: 4px;
+            background: var(--primary);
+            border-radius: 0 4px 4px 0;
+            box-shadow: 2px 0 10px var(--primary-glow);
+        }
+
+        .sidebar-footer { padding: 25px; border-top: 1px solid rgba(0,0,0,0.05); font-size: 0.75rem; color: #94a3b8; text-align: center; font-weight: 500; }
+
+              .main-wrapper {
+            margin-left: var(--sidebar-width);
+            width: 100%;
+            transition: margin-left var(--transition-speed);
+        }
+
+        .top-header {
+            position: sticky; top: 0;
+            height: var(--header-height);
+            background: var(--glass-bg); 
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid #f1f5f9;
+            z-index: 999;
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 0 25px;
+            transition: box-shadow var(--transition-speed);
+        }
+        
+        .top-header.scrolled {
+            box-shadow: var(--shadow-header);
+            border-bottom-color: transparent;
+        }
+
+        .menu-toggle { 
+            font-size: 1.5rem; color: var(--text-main); cursor: pointer; 
+            margin-right: 20px; 
+            display: none; 
+        }
+        
+        .header-title h2 { 
+            font-size: 1.2rem; font-weight: 800; 
+            color: var(--dark-bg);
+        }
+
+        .header-actions { display: flex; align-items: center; gap: 15px; }
+
+        .notif-btn { position: relative; cursor: pointer; }
+        .notif-badge {
+            position: absolute; top: 0; right: 0; width: 10px; height: 10px;
+            background: var(--primary); 
+            border-radius: 50%;
+            animation: pulse-logo 2s infinite;
+        }
+        .user-profile {
+            display: flex; align-items: center; gap: 10px;
+            background: var(--glass-bg);
+            padding: 5px 15px 5px 5px;
+            border-radius: 50px;
+            border: 1px solid #f1f5f9;
+            transition: .2s;
+        }
+        .avatar {
+            width: 38px; height: 38px;
+            background: var(--primary-bg);
+            color: var(--primary);
+            border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            font-weight: 700; font-size: 0.85rem;
+        }
+        .user-info {
+            line-height: 1.2;
+            text-align: right;
+            margin-right: 5px;
+        }
+
+        .content-body {
+            padding: 40px;
+            min-height: calc(100vh - var(--header-height));
+        }
+
+              @media (max-width: 1024px) {
+            .sidebar { 
+                transform: translateX(-100%); 
+                box-shadow: 0 0 0 0;
+            }
+            .sidebar.open { 
+                transform: translateX(0); 
+                box-shadow: 0 0 100px rgba(0,0,0,0.5);
+            }
+            .main-wrapper { margin-left: 0; }
+            .menu-toggle { display: block; }
+            .header-title { display: none; }
+            .user-info { display: none; }
+            .top-header { padding: 0 15px; }
+            .content-body { padding: 20px; }
+            .user-profile { padding: 5px; }
+        }
+    </style>
+</head>
+
+<body>
+    
+    <nav class="sidebar" id="sidebar">
+        <div class="brand-box">
+            <div class="brand-logo"><i class="fas fa-heart-pulse"></i></div>
+            <div class="brand-text">
+                <h1>INSURANCE</h1>
+                <span>COST PEDICTION</span>
+            </div>
+        </div>
+
+        <div class="nav-links">
+            <div class="nav-category">Main Menu</div>
+
+    
+            
+            <a href="{{ url_for('main.dashboard') }}" class="nav-item">
+                <i class="fas fa-chart-pie"></i> <span>Dashboard</span>
+            </a>
+
+            <div class="nav-category">Intelligence Tools</div>
+
+            <a href="{{ url_for('main.dataset') }}" class="nav-item">
+                <i class="fas fa-database"></i> <span>Dataset Manager</span>
+            </a>
+            
+            <a href="/model-arena" class="nav-item"> 
+                <i class="fas fa-balance-scale"></i> <span>Model Arena</span>
+            </a>
+
+            <a href="{{ url_for('main.prediction_form') }}" class="nav-item">
+                <i class="fas fa-magic"></i> <span>Prediction</span>
+            </a>
+            <a href="/risk" class="nav-item">
+                <i class="fas fa-heartbeat"></i> <span>Risk Analysis</span>
+            </a>
+            <div class="nav-category">System Admin</div>
+            <a href="/history" class="nav-item">
+                <i class="fas fa-history"></i> <span>History Archive</span>
+            </a>
+            <a href="/admin/add" class="nav-item">
+                <i class="fas fa-user-shield"></i> <span>Admin Panel</span>
+            </a>
+            <a href="/setting" class="nav-item">
+                <i class="fas fa-gear"></i> <span>Settings</span>
+            </a>
+        </div>
+        
+        <div class="sidebar-footer">
+            &copy; 2024 UNNES Computer Science<br>
+        </div>
+    </nav>
+
+    <div class="main-wrapper">
+        
+       <header class="top-header" id="top-header">
+            <div style="display:flex; align-items:center;">
+                <i class="fas fa-bars menu-toggle" onclick="toggleSidebar()"></i>
+                <div class="header-title">
+                    <h2>Dashboard</h2>
+                </div>
+            </div>
+
+            <div class="header-actions">
+                <a href="/notifications" class="notif-btn" style="text-decoration: none; color: inherit;">
+                    <i class="fas fa-bell"></i>
+                    <span class="notif-badge"></span>
+                </a>
+                
+                <a href="/profile" class="user-profile" style="text-decoration: none; color: inherit;">
+                    <div class="user-info">
+                        <div>User Prediction</div>
+                    </div>
+                    <div class="avatar">UP</div>
+                </a>
+            </div>
+        </header>
+
+        <main class="content-body">
+            {% block content %}
+            {% endblock %}
+        </main>
+    </div>
+    <script>
+        function toggleSidebar() {
+            document.getElementById('sidebar').classList.toggle('open');
+        }
+
+        function initializeNavigation() {
+            const currentPath = window.location.pathname; 
+            const navLinks = document.querySelectorAll('.nav-item');
+            let activeTitle = "Dashboard";
+
+            navLinks.forEach(link => {
+                link.classList.remove('active');
+                const href = link.getAttribute('href'); 
+
+                if (currentPath === href || (href !== '/' && currentPath.startsWith(href))) { 
+                    link.classList.add('active');
+                    activeTitle = link.querySelector('span').textContent;
+                }
+            });
+
+            if (currentPath === '/') {
+                const homeUrl = "{{ url_for('main.home') }}";
+                const homeLink = document.querySelector(`.nav-item[href="${homeUrl}"]`);
+                if (homeLink) {
+                    homeLink.classList.add('active');
+                    activeTitle = "Overview";
+                }
+            }
+            document.querySelector('.header-title h2').textContent = activeTitle;
+        }
+
+        function handleScroll() {
+            const header = document.getElementById('top-header');
+            if (window.scrollY > 10) {
+                header.classList.add('scrolled');
+            } else {
+                header.classList.remove('scrolled');
+            }
+        }
+        document.addEventListener("DOMContentLoaded", () => {
+            initializeNavigation();
+            window.addEventListener('scroll', handleScroll);
+            handleScroll();
+        });
+    </script>
+</body>
+</html>

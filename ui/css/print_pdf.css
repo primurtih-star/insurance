@@ -1,0 +1,150 @@
+/* ================================
+   print_pdf.css
+   Styling optimized for printing & generating PDFs
+   - Remove non-essential UI
+   - Use print-friendly fonts, colors
+   - Page breaks and headers/footers
+   ================================= */
+
+/* Base print settings */
+@page {
+  size: A4;
+  margin: 20mm;
+}
+
+/* Hide interactive elements */
+@media print {
+  a[href]:after { content: " (" attr(href) ")"; font-size: 10px; color: #333; }
+  .no-print, .btn, .navbar, .nav, .toolbar, .toast, .sheet, .modal { display: none !important; }
+  body { background: white !important; color: #111 !important; -webkit-print-color-adjust: exact; }
+  .container { max-width: 100%; padding: 0; margin: 0; }
+  .card { box-shadow: none !important; border: none !important; background: transparent !important; padding: 0; }
+  header, footer, nav { display: none !important; }
+}
+
+/* Default print typography */
+@media print {
+  body { font-size: 12pt; line-height: 1.35; font-family: "Times New Roman", serif; color: #111; }
+  h1 { font-size: 20pt; }
+  h2 { font-size: 16pt; }
+  h3 { font-size: 14pt; }
+  p { font-size: 11pt; }
+}
+
+/* Page header/footer via running elements (supported in some engines) */
+@media print {
+  .print-header { display: block; position: running(header); }
+  .print-footer { display: block; position: running(footer); }
+}
+
+/* Page-break helpers */
+.break-before { page-break-before: always; break-before: page; }
+.break-after  { page-break-after: always; break-after: page; }
+.avoid-break-inside { break-inside: avoid; page-break-inside: avoid; }
+
+/* Tables: make them print friendly */
+@media print {
+  .table { font-size: 11pt; border-collapse: collapse; width: 100%; }
+  .table th, .table td { border: 1px solid #ccc; padding: 8px; background: transparent; }
+  .table thead { background: #f4f4f4; }
+  .table tr { page-break-inside: avoid; }
+}
+
+/* Charts & images */
+@media print {
+  .chart, .img-figure { page-break-inside: avoid; max-width: 100%; height: auto !important; }
+  .legend { font-size: 10pt; }
+}
+
+/* Formatted code blocks for print */
+@media print {
+  pre, code {
+    white-space: pre-wrap !important;
+    word-wrap: break-word !important;
+    font-size: 10pt;
+    color: #222;
+    background: transparent !important;
+    border: 1px solid #eee !important;
+    padding: 6px !important;
+  }
+}
+
+/* Accessibility: high-contrast print */
+@media print and (color) {
+  :root { --print-accent: #111; }
+}
+
+/* Compact report layout */
+.report {
+  font-family: "Georgia", serif;
+  margin: 0;
+  padding: 0;
+}
+.report .report-title { font-size: 22pt; font-weight: 700; margin-bottom: 8px; }
+.report .report-meta { font-size: 10pt; color: #666; margin-bottom: 16px; }
+
+/* Table of contents styles (useful for PDFs) */
+.toc { margin-bottom: 12px; }
+.toc li { margin-bottom: 6px; }
+.toc a { text-decoration: none; color: #111; }
+
+/* Footnotes & disclaimers */
+.footnote { font-size: 9pt; color: #444; margin-top: 10px; border-top: 1px dashed #e6e6e6; padding-top: 8px; }
+
+/* Watermark for printed drafts */
+.print-watermark {
+  position: fixed;
+  top: 40%;
+  left: 10%;
+  right: 10%;
+  opacity: 0.06;
+  font-size: 48pt;
+  transform: rotate(-30deg);
+  text-align: center;
+  z-index: 0;
+  pointer-events: none;
+}
+
+/* Signature area (for PDF export) */
+.signature {
+  margin-top: 36px;
+  display: flex;
+  gap: 24px;
+}
+.signature .sig-block { width: 40%; border-top: 1px solid #999; padding-top: 8px; text-align: left; font-size: 11pt; }
+
+/* Invoice-style: grid alignment for print */
+.invoice {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+}
+.invoice .company { font-weight: 700; }
+.invoice .meta { text-align: right; }
+
+/* Prevent widows & orphans */
+p, h1, h2, h3, h4, blockquote { orphans: 3; widows: 3; }
+
+/* Print-friendly list styles */
+@media print {
+  .checklist { list-style: none; margin: 0; padding: 0; }
+  .checklist li { margin-bottom: 6px; padding-left: 18px; position: relative; }
+  .checklist li:before { content: "•"; position: absolute; left: 0; font-size: 12pt; line-height: 1; color: #111; }
+}
+
+/* Print color fallbacks: remove background color if engine doesn't support color */
+@media print {
+  .no-bg { background: none !important; }
+}
+
+/* Ensure forms print values */
+@media print {
+  input, textarea, select {
+    border: none;
+    background: transparent;
+    -webkit-appearance: none;
+    appearance: none;
+  }
+}
+
+/* End of print_pdf.css */

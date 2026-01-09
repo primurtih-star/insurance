@@ -1,0 +1,413 @@
+{% extends "layout.html" %}
+{% block content %}
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800&family=Outfit:wght@500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+<style>
+    /* --- 1. PALET WARNA CERAH (Cream & Emerald) --- */
+    :root {
+        --bg-light: #fffbeb;       /* Cream Lembut */
+        --bg-grad-end: #ecfdf5;    /* Emerald Paling Muda */
+        
+        --primary: #10b981;        /* Emerald Green (Main) */
+        --primary-dark: #047857;   /* Emerald Dark */
+        
+        --accent-blue: #3b82f6;    /* Medical Blue */
+        --accent-orange: #f59e0b;  /* Warning/Cost */
+        
+        --text-dark: #1e293b;      /* Slate Dark (buat teks) */
+        --text-muted: #64748b;     /* Slate Muted */
+        
+        --shadow-soft: 0 20px 40px -10px rgba(16, 185, 129, 0.15);
+        --glass-white: rgba(255, 255, 255, 0.7);
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+        /* Gradient Cerah: Cream ke Mint */
+        background: linear-gradient(135deg, var(--bg-light) 0%, var(--bg-grad-end) 100%);
+        font-family: 'Plus Jakarta Sans', sans-serif;
+        height: 100vh;
+        width: 100vw;
+        overflow: hidden;
+        color: var(--text-dark);
+        perspective: 1200px; /* Kunci efek 3D */
+    }
+
+    /* Override Layout */
+    .sidebar, .top-header, footer { display: none !important; }
+    .main-wrapper { margin: 0 !important; width: 100% !important; padding: 0 !important; }
+
+    /* --- 2. CANVAS BACKGROUND (Microscope View) --- */
+    #lab-canvas {
+        position: fixed; top: 0; left: 0;
+        width: 100%; height: 100%;
+        z-index: 0;
+    }
+
+    /* --- 3. 3D SCENE CONTAINER --- */
+    .lab-scene {
+        position: absolute; inset: 0;
+        pointer-events: none;
+        z-index: 1;
+        transform-style: preserve-3d;
+    }
+
+    /* --- 4. 3D OBJECT: FIRST AID BOX --- */
+    .medbox-wrapper {
+        position: absolute;
+        top: 20%; left: 15%;
+        width: 100px; height: 100px;
+        transform-style: preserve-3d;
+        animation: floatRotate 12s infinite linear;
+    }
+
+    .medbox {
+        width: 100%; height: 100%;
+        position: relative;
+        transform-style: preserve-3d;
+    }
+
+    .box-face {
+        position: absolute;
+        width: 100px; height: 100px;
+        background: white;
+        border: 1px solid #e2e8f0;
+        /* Bayangan halus biar kayak plastik/keramik */
+        box-shadow: inset 0 0 15px rgba(0,0,0,0.02);
+        display: flex; align-items: center; justify-content: center;
+        font-size: 3rem;
+        border-radius: 12px;
+    }
+
+    /* Sisi-sisi Kotak */
+    .front  { transform: rotateY(0deg) translateZ(50px); }
+    .back   { transform: rotateY(180deg) translateZ(50px); }
+    .right  { transform: rotateY(90deg) translateZ(50px); }
+    .left   { transform: rotateY(-90deg) translateZ(50px); }
+    .top    { transform: rotateX(90deg) translateZ(50px); }
+    .bottom { transform: rotateX(-90deg) translateZ(50px); }
+
+    /* Ikon Cross di Kotak */
+    .plus-icon {
+        color: var(--primary);
+        filter: drop-shadow(0 2px 5px rgba(16, 185, 129, 0.3));
+    }
+
+    /* --- 5. 3D OBJECT: PILL CAPSULE (CSS SHAPE) --- */
+    .capsule-wrapper {
+        position: absolute;
+        bottom: 25%; right: 15%;
+        width: 60px; height: 120px;
+        transform-style: preserve-3d;
+        animation: floatBob 6s infinite ease-in-out;
+    }
+
+    .capsule-body {
+        width: 100%; height: 100%;
+        border-radius: 50px;
+        /* Gradient Kapsul: Putih - Orange (Biaya) */
+        background: linear-gradient(180deg, #ffffff 50%, var(--accent-orange) 50%);
+        box-shadow: 
+            -10px 10px 30px rgba(245, 158, 11, 0.2),
+            inset -5px -5px 10px rgba(0,0,0,0.05);
+        transform: rotate(30deg);
+        position: relative;
+    }
+    
+    /* Kilauan Kapsul (Highlight) */
+    .capsule-body::after {
+        content: ''; position: absolute;
+        top: 15px; left: 15px; width: 15px; height: 30px;
+        background: white; border-radius: 50px; opacity: 0.6;
+    }
+
+    /* --- 6. FLOATING ICONS (GLASS ICONS) --- */
+    .glass-icon {
+        position: absolute;
+        width: 60px; height: 60px;
+        background: rgba(255,255,255,0.6);
+        backdrop-filter: blur(5px);
+        border-radius: 16px;
+        display: flex; align-items: center; justify-content: center;
+        box-shadow: 0 10px 20px rgba(0,0,0,0.05);
+        border: 1px solid white;
+        font-size: 1.8rem;
+        animation: floatIcon 5s ease-in-out infinite;
+    }
+    
+    .gi-1 { top: 15%; right: 30%; color: var(--accent-blue); animation-delay: 0s; } /* DNA */
+    .gi-2 { bottom: 20%; left: 20%; color: var(--primary); animation-delay: 2s; }   /* Stethoscope */
+    .gi-3 { top: 55%; left: 10%; color: var(--text-dark); animation-delay: 1s; font-size: 1.5rem; opacity: 0.7; } /* Chart */
+
+    /* --- 7. MAIN CARD (NEUMORPHISM LIGHT) --- */
+    .main-container {
+        position: relative; z-index: 10;
+        height: 100vh;
+        display: flex; justify-content: center; align-items: center;
+    }
+
+    .clean-card {
+        background: rgba(255, 255, 255, 0.6);
+        backdrop-filter: blur(20px);
+        -webkit-backdrop-filter: blur(20px);
+        border: 2px solid white;
+        border-radius: 30px;
+        padding: 50px;
+        width: 90%; max-width: 550px;
+        text-align: center;
+        box-shadow: 
+            0 20px 50px -10px rgba(16, 185, 129, 0.15),
+            inset 0 0 0 1px white;
+        transform: translateZ(0);
+        transition: transform 0.1s;
+    }
+
+    .badge-status {
+        display: inline-block;
+        padding: 8px 16px;
+        background: #ecfdf5;
+        color: var(--primary-dark);
+        border-radius: 50px;
+        font-weight: 700;
+        font-size: 0.8rem;
+        letter-spacing: 1px;
+        margin-bottom: 20px;
+        border: 1px solid #d1fae5;
+    }
+
+    .error-title {
+        font-family: 'Outfit', sans-serif;
+        font-size: 7rem;
+        font-weight: 800;
+        line-height: 1;
+        margin-bottom: 10px;
+        /* Gradient Text: Emerald ke Blue */
+        background: linear-gradient(135deg, var(--primary), var(--accent-blue));
+        -webkit-background-clip: text;
+        background-clip: text;
+        -webkit-text-fill-color: transparent;
+        position: relative;
+    }
+
+    /* Efek Bayangan Teks */
+    .error-title::after {
+        content: '404';
+        position: absolute; top: 5px; left: 5px;
+        color: rgba(0,0,0,0.03);
+        z-index: -1;
+        -webkit-text-fill-color: rgba(0,0,0,0.05);
+    }
+
+    .msg-head { font-size: 1.8rem; font-weight: 700; margin-bottom: 15px; color: var(--text-dark); }
+    
+    .msg-body {
+        font-size: 1rem; color: var(--text-muted); line-height: 1.6; margin-bottom: 40px;
+    }
+
+    /* BUTTONS */
+    .btn-row { display: flex; gap: 15px; justify-content: center; }
+
+    .btn-emerald {
+        padding: 15px 35px;
+        background: var(--primary);
+        color: white;
+        border-radius: 12px;
+        text-decoration: none;
+        font-weight: 700;
+        box-shadow: 0 10px 20px rgba(16, 185, 129, 0.3);
+        transition: 0.3s;
+        display: flex; align-items: center; gap: 10px;
+        border: none;
+    }
+    .btn-emerald:hover {
+        background: var(--primary-dark);
+        transform: translateY(-3px);
+        box-shadow: 0 15px 30px rgba(16, 185, 129, 0.4);
+    }
+
+    .btn-light {
+        padding: 15px 30px;
+        background: white;
+        color: var(--text-muted);
+        border-radius: 12px;
+        text-decoration: none;
+        font-weight: 600;
+        border: 1px solid #e2e8f0;
+        transition: 0.3s;
+        display: flex; align-items: center; gap: 10px;
+    }
+    .btn-light:hover {
+        background: #f8fafc;
+        border-color: #cbd5e1;
+        color: var(--text-dark);
+    }
+
+    /* --- ANIMATIONS --- */
+    @keyframes floatRotate {
+        0% { transform: rotateX(0) rotateY(0) translateY(0); }
+        50% { transform: rotateX(180deg) rotateY(180deg) translateY(-20px); }
+        100% { transform: rotateX(360deg) rotateY(360deg) translateY(0); }
+    }
+    @keyframes floatBob {
+        0%, 100% { transform: translateY(0) rotate(30deg); }
+        50% { transform: translateY(-25px) rotate(35deg); }
+    }
+    @keyframes floatIcon {
+        0%, 100% { transform: translateY(0); }
+        50% { transform: translateY(-15px); }
+    }
+
+</style>
+
+<canvas id="lab-canvas"></canvas>
+
+<div class="lab-scene" id="sceneLayer">
+    
+    <div class="medbox-wrapper">
+        <div class="medbox">
+            <div class="box-face front"><i class="fas fa-plus plus-icon"></i></div>
+            <div class="box-face back"><i class="fas fa-plus plus-icon"></i></div>
+            <div class="box-face right"><i class="fas fa-file-medical plus-icon"></i></div> <div class="box-face left"><i class="fas fa-coins plus-icon" style="color:var(--accent-orange)"></i></div> <div class="box-face top"></div>
+            <div class="box-face bottom"></div>
+        </div>
+    </div>
+
+    <div class="capsule-wrapper">
+        <div class="capsule-body"></div>
+    </div>
+
+    <div class="glass-icon gi-1"><i class="fas fa-dna"></i></div>
+    <div class="glass-icon gi-2"><i class="fas fa-stethoscope"></i></div>
+    <div class="glass-icon gi-3"><i class="fas fa-chart-line"></i></div>
+
+</div>
+
+<div class="main-container">
+    <div class="clean-card" id="tiltCard">
+        
+        <div class="badge-status">
+            <i class="fas fa-search-location"></i> DIAGNOSIS: NOT FOUND
+        </div>
+
+        <h1 class="error-title">404</h1>
+        <h2 class="msg-head">Hasil Tidak Ditemukan</h2>
+        
+        <p class="msg-body">
+            Maaf, halaman atau data prediksi yang Anda cari tidak tersedia di database klinik kami. Mungkin data sudah dipindahkan atau dihapus.
+        </p>
+
+        <div class="btn-row">
+            <a href="{{ url_for('main.dashboard') }}" class="btn-emerald">
+                <i class="fas fa-home"></i> Dashboard
+            </a>
+            <a href="#" class="btn-light" onclick="history.back()">
+                <i class="fas fa-arrow-left"></i> Kembali
+            </a>
+        </div>
+
+    </div>
+</div>
+
+<script>
+    document.addEventListener("DOMContentLoaded", () => {
+        
+        // --- 1. CANVAS: BUBBLES / HEALTHY CELLS ---
+        const canvas = document.getElementById('lab-canvas');
+        const ctx = canvas.getContext('2d');
+        let width, height;
+        let particles = [];
+        let mouse = { x: 0, y: 0 };
+
+        function resize() {
+            width = canvas.width = window.innerWidth;
+            height = canvas.height = window.innerHeight;
+        }
+        window.addEventListener('resize', resize);
+        resize();
+
+        // Mouse Move Listener (Parallax Logic)
+        window.addEventListener('mousemove', (e) => {
+            mouse.x = e.clientX;
+            mouse.y = e.clientY;
+
+            // Parallax Object 3D (Box, Capsule)
+            const scene = document.getElementById('sceneLayer');
+            const moveX = (window.innerWidth - e.pageX * 2) / 60;
+            const moveY = (window.innerHeight - e.pageY * 2) / 60;
+            scene.style.transform = `translateX(${moveX}px) translateY(${moveY}px)`;
+
+            // Tilt Card (Kartu Miring)
+            const card = document.getElementById('tiltCard');
+            const ax = (window.innerWidth / 2 - e.pageX) / 40;
+            const ay = (window.innerHeight / 2 - e.pageY) / 40;
+            card.style.transform = `rotateY(${ax}deg) rotateX(${ay}deg)`;
+        });
+
+        // Partikel (Bentuk Bulat & Tanda Tambah)
+        class CellParticle {
+            constructor() {
+                this.x = Math.random() * width;
+                this.y = Math.random() * height;
+                this.size = Math.random() * 8 + 2; 
+                this.speedX = (Math.random() - 0.5) * 0.5;
+                this.speedY = (Math.random() - 0.5) * 0.5;
+                this.type = Math.random() > 0.5 ? 'circle' : 'plus'; // Random bentuk
+                
+                // Warna Acak: Emerald Soft, Blue Soft, atau Orange Soft
+                const colors = ['#d1fae5', '#dbeafe', '#fef3c7'];
+                this.color = colors[Math.floor(Math.random() * colors.length)];
+            }
+
+            update() {
+                this.x += this.speedX;
+                this.y += this.speedY;
+
+                // Mouse Interaction (Menjauh kalau didekati)
+                let dx = mouse.x - this.x;
+                let dy = mouse.y - this.y;
+                let dist = Math.sqrt(dx*dx + dy*dy);
+                if(dist < 100) {
+                    this.x -= dx * 0.03;
+                    this.y -= dy * 0.03;
+                }
+
+                // Bounce Edges
+                if (this.x < 0 || this.x > width) this.speedX *= -1;
+                if (this.y < 0 || this.y > height) this.speedY *= -1;
+            }
+
+            draw() {
+                ctx.fillStyle = this.color;
+                
+                if (this.type === 'circle') {
+                    ctx.beginPath();
+                    ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+                    ctx.fill();
+                } else {
+                    // Gambar tanda tambah (+)
+                    ctx.font = `${this.size * 2}px Arial`;
+                    ctx.fillText("+", this.x, this.y);
+                }
+            }
+        }
+
+        // Buat 50 partikel
+        for(let i=0; i<50; i++) particles.push(new CellParticle());
+
+        function animate() {
+            ctx.clearRect(0, 0, width, height);
+            particles.forEach(p => {
+                p.update();
+                p.draw();
+            });
+            requestAnimationFrame(animate);
+        }
+        animate();
+    });
+</script>
+
+{% endblock %}

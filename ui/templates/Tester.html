@@ -1,0 +1,91 @@
+<div class="app-content">
+  <div class="content-container">
+
+    <div class="welcome-banner">
+      <h2>Halo, Admin! 👋</h2>
+      <p>Berikut adalah ringkasan performa dataset dan analisis model Anda hari ini.</p>
+    </div>
+
+    <div class="dashboard-grid">
+
+      <div class="card stat-card span-3">
+        <div class="stat-head"><div class="stat-icon">📦</div></div>
+        <div class="stat-label">Total Dataset</div>
+        <div class="stat-value">1,240</div>
+      </div>
+      
+      <div class="card stat-card span-3">
+        <div class="stat-head"><div class="stat-icon">👥</div></div>
+        <div class="stat-label">Active Users</div>
+        <div class="stat-value">843</div>
+      </div>
+
+      <div class="card stat-card span-3">
+        <div class="stat-head"><div class="stat-icon">⚡</div></div>
+        <div class="stat-label">Accuracy</div>
+        <div class="stat-value">98.2%</div>
+      </div>
+
+      <div class="card stat-card span-3">
+        <div class="stat-head"><div class="stat-icon">💾</div></div>
+        <div class="stat-label">Storage Used</div>
+        <div class="stat-value">45 GB</div>
+      </div>
+
+      <div class="card span-8">
+        <div class="card-header">
+          <h3>Statistik Penggunaan</h3>
+        </div>
+        <div class="chart-wrapper">
+          <canvas id="mainChart"></canvas>
+        </div>
+      </div>
+
+      <div class="card span-4">
+        <div class="card-header">
+          <h3>Aktivitas Terbaru</h3>
+        </div>
+        <div class="activity-feed">
+          <div class="feed-item">
+            <div class="feed-icon success">✓</div>
+            <div class="feed-content">
+              <h4>Model Trained</h4>
+              <p>Model v2.1 berhasil dilatih.</p>
+            </div>
+            <span class="feed-time">2m ago</span>
+          </div>
+          <div class="feed-item">
+            <div class="feed-icon warning">!</div>
+            <div class="feed-content">
+              <h4>Disk Full</h4>
+              <p>Penyimpanan hampir penuh.</p>
+            </div>
+            <span class="feed-time">1h ago</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="card span-12">
+        <div class="card-header">
+          <h3>Dataset Terakhir</h3>
+          <button class="btn btn-sm">Lihat Semua</button>
+        </div>
+        <div class="table-container">
+          <table class="table">
+            <thead>
+              <tr><th>Nama Dataset</th><th>Status</th><th>Tanggal</th><th>Aksi</th></tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>Sales_Data_2024.csv</td>
+                <td><span class="badge">Ready</span></td>
+                <td>29 Nov 2025</td>
+                <td class="cell-action">...</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+    </div> </div>
+</div>

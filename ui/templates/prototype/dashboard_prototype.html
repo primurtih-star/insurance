@@ -1,0 +1,407 @@
+{% extends "layout.html" %}
+{% block content %}
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+<style>
+    /* --- 1. THEME VARIABLES (Consistent with Settings) --- */
+    :root {
+        --c-bg-app: #fdfbf7;
+        --c-surface: #ffffff;
+        --c-primary: #10b981;       /* Emerald */
+        --c-primary-light: #ecfdf5; /* Light Emerald */
+        --c-text-main: #1e293b;
+        --c-text-muted: #64748b;
+        --shadow-soft: 0 10px 30px -10px rgba(16, 185, 129, 0.08);
+        --radius-lg: 24px;
+        --radius-md: 16px;
+        --font-main: 'Plus Jakarta Sans', sans-serif;
+    }
+
+    body {
+        background-color: var(--c-bg-app);
+        font-family: var(--font-main);
+        color: var(--c-text-main);
+    }
+
+    /* --- 2. LAYOUT GRID --- */
+    .dashboard-container {
+        display: grid;
+        grid-template-columns: 260px 1fr; /* Sidebar | Content */
+        gap: 30px;
+        max-width: 1600px;
+        margin: 0 auto;
+        padding: 30px;
+        min-height: 100vh;
+    }
+
+    /* --- 3. SIDEBAR (Glassy Panel) --- */
+    .sidebar {
+        background: var(--c-surface);
+        border-radius: var(--radius-lg);
+        padding: 30px 20px;
+        box-shadow: var(--shadow-soft);
+        height: calc(100vh - 60px);
+        position: sticky;
+        top: 30px;
+        display: flex;
+        flex-direction: column;
+    }
+
+    .brand-logo {
+        font-size: 1.5rem;
+        font-weight: 800;
+        color: var(--c-primary);
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        margin-bottom: 40px;
+        padding-left: 10px;
+    }
+
+    .nav-links {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+    }
+
+    .nav-link {
+        display: flex;
+        align-items: center;
+        gap: 15px;
+        padding: 16px 20px;
+        border-radius: var(--radius-md);
+        color: var(--c-text-muted);
+        text-decoration: none;
+        font-weight: 600;
+        transition: 0.3s;
+    }
+
+    .nav-link:hover, .nav-link.active {
+        background: var(--c-primary-light);
+        color: var(--c-primary);
+    }
+
+    .nav-link.active {
+        box-shadow: 0 4px 15px rgba(16, 185, 129, 0.1);
+    }
+
+    /* --- 4. MAIN CONTENT --- */
+    .main-content {
+        display: flex;
+        flex-direction: column;
+        gap: 30px;
+    }
+
+    /* Header */
+    .top-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 10px;
+    }
+    .welcome-text h2 { margin: 0; font-weight: 800; font-size: 1.8rem; }
+    .welcome-text p { margin: 5px 0 0 0; color: var(--c-text-muted); }
+    
+    .user-profile {
+        display: flex; align-items: center; gap: 15px;
+        background: var(--c-surface); padding: 8px 15px;
+        border-radius: 50px;
+        box-shadow: var(--shadow-soft);
+    }
+
+    /* Stats Cards */
+    .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+        gap: 20px;
+    }
+
+    .stat-card {
+        background: var(--c-surface);
+        padding: 25px;
+        border-radius: var(--radius-lg);
+        box-shadow: var(--shadow-soft);
+        border: 1px solid rgba(0,0,0,0.02);
+        transition: transform 0.3s;
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .stat-card:hover { transform: translateY(-5px); }
+
+    .stat-icon {
+        width: 50px; height: 50px;
+        border-radius: 12px;
+        display: flex; justify-content: center; align-items: center;
+        font-size: 1.2rem;
+        margin-bottom: 15px;
+    }
+    .stat-value { font-size: 2rem; font-weight: 800; color: var(--c-text-main); }
+    .stat-label { color: var(--c-text-muted); font-size: 0.9rem; font-weight: 500; }
+    
+    /* Charts Section */
+    .charts-wrapper {
+        display: grid;
+        grid-template-columns: 2fr 1fr;
+        gap: 20px;
+    }
+
+    .chart-card {
+        background: var(--c-surface);
+        padding: 25px;
+        border-radius: var(--radius-lg);
+        box-shadow: var(--shadow-soft);
+    }
+    .chart-header {
+        display: flex; justify-content: space-between; align-items: center;
+        margin-bottom: 20px;
+    }
+    .chart-title { font-weight: 700; font-size: 1.1rem; }
+
+    /* Recent Table */
+    .table-card {
+        background: var(--c-surface);
+        padding: 25px;
+        border-radius: var(--radius-lg);
+        box-shadow: var(--shadow-soft);
+    }
+
+    table { width: 100%; border-collapse: collapse; }
+    th { text-align: left; color: var(--c-text-muted); font-size: 0.85rem; padding: 15px; font-weight: 600; }
+    td { padding: 15px; border-top: 1px solid #f1f5f9; font-size: 0.95rem; font-weight: 500; }
+    
+    .risk-badge {
+        padding: 6px 12px; border-radius: 20px; font-size: 0.8rem; font-weight: 700;
+        display: inline-block;
+    }
+    .risk-low { background: #dcfce7; color: #166534; }
+    .risk-medium { background: #fef3c7; color: #92400e; }
+    .risk-high { background: #fee2e2; color: #b91c1c; }
+
+    /* Responsive */
+    @media (max-width: 1024px) {
+        .dashboard-container { grid-template-columns: 1fr; }
+        .sidebar { display: none; } /* Mobile toggle needed for full impl */
+        .charts-wrapper { grid-template-columns: 1fr; }
+    }
+</style>
+
+<div class="dashboard-container">
+    
+    <nav class="sidebar">
+        <div class="brand-logo">
+            <i class="fas fa-leaf"></i> HealthTech
+        </div>
+        <ul class="nav-links">
+            <li><a href="#" class="nav-link active"><i class="fas fa-home"></i> Dashboard</a></li>
+            <li><a href="/predict" class="nav-link"><i class="fas fa-calculator"></i> Prediksi Baru</a></li>
+            <li><a href="/history" class="nav-link"><i class="fas fa-history"></i> Riwayat Data</a></li>
+            <li><a href="/analysis" class="nav-link"><i class="fas fa-chart-pie"></i> Analisis</a></li>
+            <li style="margin-top: auto;">
+                <a href="/setting" class="nav-link"><i class="fas fa-cog"></i> Pengaturan</a>
+            </li>
+        </ul>
+    </nav>
+
+    <main class="main-content">
+        
+        <header class="top-header">
+            <div class="welcome-text">
+                <h2 id="greeting">Selamat Datang, Dokter!</h2>
+                <p>Berikut ringkasan aktivitas prediksi hari ini.</p>
+            </div>
+            <div class="user-profile">
+                <div style="text-align: right; line-height: 1.2;">
+                    <div style="font-weight: 700; font-size: 0.9rem;">Dr. Farhan</div>
+                    <small style="color: var(--c-primary);">Admin Utama</small>
+                </div>
+                <div style="width: 40px; height: 40px; background: #e2e8f0; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: var(--c-text-muted);">
+                    <i class="fas fa-user"></i>
+                </div>
+            </div>
+        </header>
+
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-icon" style="background: #e0f2fe; color: #0ea5e9;">
+                    <i class="fas fa-users"></i>
+                </div>
+                <div class="stat-value">1,240</div>
+                <div class="stat-label">Total Pasien</div>
+                <i class="fas fa-arrow-up" style="position: absolute; right: 20px; top: 30px; color: #10b981;"></i>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon" style="background: #dcfce7; color: #10b981;">
+                    <i class="fas fa-stethoscope"></i>
+                </div>
+                <div class="stat-value">85</div>
+                <div class="stat-label">Prediksi Hari Ini</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon" style="background: #fee2e2; color: #ef4444;">
+                    <i class="fas fa-exclamation-triangle"></i>
+                </div>
+                <div class="stat-value">12%</div>
+                <div class="stat-label">Rasio Risiko Tinggi</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon" style="background: #fef3c7; color: #f59e0b;">
+                    <i class="fas fa-coins"></i>
+                </div>
+                <div class="stat-value">4.2M</div>
+                <div class="stat-label">Est. Total Premi</div>
+            </div>
+        </div>
+
+        <div class="charts-wrapper">
+            <div class="chart-card">
+                <div class="chart-header">
+                    <div class="chart-title">Tren Permintaan Prediksi (7 Hari)</div>
+                    <button style="border:none; background:none; color:var(--c-primary); cursor:pointer;"><i class="fas fa-ellipsis-h"></i></button>
+                </div>
+                <div style="height: 250px;">
+                    <canvas id="trendChart"></canvas>
+                </div>
+            </div>
+            <div class="chart-card">
+                <div class="chart-header">
+                    <div class="chart-title">Distribusi Risiko</div>
+                </div>
+                <div style="height: 250px; position: relative;">
+                    <canvas id="riskChart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <div class="table-card">
+            <div class="chart-header">
+                <div class="chart-title">Riwayat Prediksi Terkini</div>
+                <a href="/history" style="text-decoration: none; font-size: 0.9rem; color: var(--c-primary); font-weight: 600;">Lihat Semua &rarr;</a>
+            </div>
+            <table>
+                <thead>
+                    <tr>
+                        <th>ID PASIEN</th>
+                        <th>NAMA</th>
+                        <th>USIA</th>
+                        <th>BMI</th>
+                        <th>STATUS</th>
+                        <th>PREMI</th>
+                        <th>AKSI</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>#P-2049</td>
+                        <td>Siti Aminah</td>
+                        <td>45 Th</td>
+                        <td>28.4</td>
+                        <td><span class="risk-badge risk-low">Low Risk</span></td>
+                        <td>Rp 3.200.000</td>
+                        <td><button onclick="viewDetail()" style="border:none; background:transparent; color:var(--c-text-muted); cursor:pointer;"><i class="fas fa-eye"></i></button></td>
+                    </tr>
+                    <tr>
+                        <td>#P-2050</td>
+                        <td>Budi Santoso</td>
+                        <td>52 Th</td>
+                        <td>31.2</td>
+                        <td><span class="risk-badge risk-high">High Risk</span></td>
+                        <td>Rp 8.500.000</td>
+                        <td><button onclick="viewDetail()" style="border:none; background:transparent; color:var(--c-text-muted); cursor:pointer;"><i class="fas fa-eye"></i></button></td>
+                    </tr>
+                    <tr>
+                        <td>#P-2051</td>
+                        <td>Andi Wijaya</td>
+                        <td>29 Th</td>
+                        <td>22.1</td>
+                        <td><span class="risk-badge risk-low">Low Risk</span></td>
+                        <td>Rp 2.800.000</td>
+                        <td><button onclick="viewDetail()" style="border:none; background:transparent; color:var(--c-text-muted); cursor:pointer;"><i class="fas fa-eye"></i></button></td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+    </main>
+</div>
+
+<script>
+    // 1. Dynamic Greeting
+    const hour = new Date().getHours();
+    const greetingEl = document.getElementById('greeting');
+    if (hour < 12) greetingEl.innerText = "Selamat Pagi, Dokter!";
+    else if (hour < 15) greetingEl.innerText = "Selamat Siang, Dokter!";
+    else if (hour < 18) greetingEl.innerText = "Selamat Sore, Dokter!";
+    else greetingEl.innerText = "Selamat Malam, Dokter!";
+
+    // 2. Trend Chart (Line)
+    const ctxTrend = document.getElementById('trendChart').getContext('2d');
+    new Chart(ctxTrend, {
+        type: 'line',
+        data: {
+            labels: ['Sen', 'Sel', 'Rab', 'Kam', 'Jum', 'Sab', 'Min'],
+            datasets: [{
+                label: 'Jumlah Prediksi',
+                data: [12, 19, 15, 25, 22, 30, 28],
+                borderColor: '#10b981',
+                backgroundColor: 'rgba(16, 185, 129, 0.05)',
+                tension: 0.4,
+                fill: true,
+                pointRadius: 4,
+                pointHoverRadius: 6
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: { legend: { display: false } },
+            scales: {
+                y: { beginAtZero: true, grid: { color: '#f1f5f9' } },
+                x: { grid: { display: false } }
+            }
+        }
+    });
+
+    // 3. Risk Chart (Doughnut)
+    const ctxRisk = document.getElementById('riskChart').getContext('2d');
+    new Chart(ctxRisk, {
+        type: 'doughnut',
+        data: {
+            labels: ['Low', 'Medium', 'High'],
+            datasets: [{
+                data: [65, 25, 10],
+                backgroundColor: ['#10b981', '#f59e0b', '#ef4444'],
+                borderWidth: 0,
+                hoverOffset: 4
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            cutout: '70%',
+            plugins: {
+                legend: { position: 'bottom', labels: { usePointStyle: true, padding: 20 } }
+            }
+        }
+    });
+
+    // 4. Mock Action
+    function viewDetail() {
+        Swal.fire({
+            title: 'Detail Pasien',
+            text: 'Membuka data lengkap pasien...',
+            icon: 'info',
+            timer: 1000,
+            showConfirmButton: false
+        });
+    }
+</script>
+
+{% endblock %}

@@ -1,0 +1,302 @@
+/* ================================
+   animation.css
+   Semua animasi, micro-interactions, keyframes
+   ----------------------------------------------
+   Use: import di index atau style
+   ================================= */
+
+/* ----------------------------------------
+   Animation timing presets
+   ---------------------------------------- */
+:root {
+  --anim-fast: 120ms;
+  --anim-base: 220ms;
+  --anim-slow: 420ms;
+  --anim-ease: cubic-bezier(.2,.9,.3,1);
+  --anim-pop: cubic-bezier(.175,.885,.32,1.275);
+}
+
+/* ----------------------------------------
+   Utility classes: animation helpers
+   ---------------------------------------- */
+.animated { animation-duration: var(--anim-base); animation-timing-function: var(--anim-ease); animation-fill-mode: both; }
+.animated-fast { animation-duration: var(--anim-fast); }
+.animated-slow { animation-duration: var(--anim-slow); }
+.animated-infinite { animation-iteration-count: infinite; }
+.animated-once { animation-iteration-count: 1; }
+
+/* ----------------------------------------
+   Fade animations
+   ---------------------------------------- */
+.fade-in { animation-name: fadeIn; }
+.fade-out { animation-name: fadeOut; }
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+@keyframes fadeOut {
+  from { opacity: 1; transform: translateY(0); }
+  to   { opacity: 0; transform: translateY(6px); }
+}
+
+/* ----------------------------------------
+   Slide animations (four directions)
+   ---------------------------------------- */
+.slide-in-up { animation-name: slideInUp; }
+.slide-out-up { animation-name: slideOutUp; }
+.slide-in-down { animation-name: slideInDown; }
+.slide-in-left { animation-name: slideInLeft; }
+.slide-in-right { animation-name: slideInRight; }
+
+@keyframes slideInUp {
+  from { opacity: 0; transform: translateY(18px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@keyframes slideOutUp {
+  from { opacity: 1; transform: translateY(0); }
+  to   { opacity: 0; transform: translateY(-14px); }
+}
+@keyframes slideInDown {
+  from { opacity: 0; transform: translateY(-18px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+@keyframes slideInLeft {
+  from { opacity: 0; transform: translateX(-18px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+@keyframes slideInRight {
+  from { opacity: 0; transform: translateX(18px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+
+/* ----------------------------------------
+   Pop / scale animations
+   ---------------------------------------- */
+.pop { animation-name: popIn; transform-origin: center center; }
+.pop-out { animation-name: popOut; transform-origin: center center; }
+
+@keyframes popIn {
+  0%   { opacity: 0; transform: scale(0.92); }
+  60%  { transform: scale(1.02); }
+  100% { opacity: 1; transform: scale(1); }
+}
+@keyframes popOut {
+  0%   { opacity: 1; transform: scale(1); }
+  100% { opacity: 0; transform: scale(0.96); }
+}
+
+/* ----------------------------------------
+   Attention-seekers
+   ---------------------------------------- */
+.shake { animation-name: shakeX; animation-duration: 420ms; }
+@keyframes shakeX {
+  10% { transform: translateX(-6px); }
+  30% { transform: translateX(6px); }
+  50% { transform: translateX(-4px); }
+  70% { transform: translateX(4px); }
+  90% { transform: translateX(-2px); }
+  100% { transform: translateX(0); }
+}
+
+.pulse { animation-name: pulseScale; animation-timing-function: var(--anim-pop); animation-duration: 900ms; animation-iteration-count: infinite; }
+@keyframes pulseScale {
+  0% { transform: scale(1); opacity: 1; }
+  50% { transform: scale(1.03); opacity: 0.94; }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+/* ----------------------------------------
+   Loader / spinner variants
+   ---------------------------------------- */
+.spinner {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  border: 3px solid rgba(0,0,0,0.08);
+  border-top-color: currentColor;
+  animation: spin 800ms linear infinite;
+  display: inline-block;
+  vertical-align: middle;
+}
+.spinner.small { width: 18px; height: 18px; border-width: 2px; }
+.spinner.large { width: 44px; height: 44px; border-width: 4px; }
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* ----------------------------------------
+   Skeleton shimmer
+   ---------------------------------------- */
+.skeleton {
+  background: linear-gradient(90deg, rgba(255,255,255,0.04) 0%, rgba(255,255,255,0.07) 50%, rgba(255,255,255,0.04) 100%);
+  background-size: 200% 100%;
+  animation: shimmer 1.4s linear infinite;
+}
+@keyframes shimmer {
+  100% { background-position: -200% 0; }
+}
+
+/* ----------------------------------------
+   Progress bar animations
+   ---------------------------------------- */
+.progress {
+  width: 100%;
+  height: 10px;
+  background: rgba(0,0,0,0.06);
+  border-radius: 999px;
+  overflow: hidden;
+}
+.progress > .bar {
+  height: 100%;
+  width: 0%;
+  transform-origin: left center;
+  transition: width 600ms var(--anim-ease);
+  background-image: linear-gradient(90deg, rgba(255,255,255,0.06), rgba(255,255,255,0.02));
+}
+
+/* ----------------------------------------
+   Animated gradients
+   ---------------------------------------- */
+.animated-gradient {
+  background: linear-gradient(45deg, #6b95ff, #4c82ff, #7ee3ff, #a8ffb0);
+  background-size: 300% 300%;
+  animation: gradientMove 8s ease infinite;
+}
+@keyframes gradientMove {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+/* ----------------------------------------
+   Flip / rotate (card flip)
+   ---------------------------------------- */
+.flip-container {
+  perspective: 1200px;
+}
+.flip {
+  transform-style: preserve-3d;
+  transition: transform 600ms var(--anim-ease);
+}
+.flip.is-flipped {
+  transform: rotateY(180deg);
+}
+.flip-front, .flip-back {
+  backface-visibility: hidden;
+  position: relative;
+  width: 100%;
+  height: 100%;
+}
+.flip-back { transform: rotateY(180deg); }
+
+/* ----------------------------------------
+   Complex modal entrance + overlay interplay
+   ---------------------------------------- */
+.modal-entrance {
+  animation-name: modalOverlayIn;
+  animation-duration: 360ms;
+  animation-timing-function: var(--anim-ease);
+  animation-fill-mode: both;
+}
+@keyframes modalOverlayIn {
+  from { opacity: 0; transform: scale(0.985); }
+  to   { opacity: 1; transform: scale(1); }
+}
+
+/* ----------------------------------------
+   Notification slide/stack animations
+   ---------------------------------------- */
+.notify-stack { display: flex; flex-direction: column; gap: 8px; }
+.notify-item { animation: notifyIn 320ms var(--anim-ease); transform-origin: right center; }
+@keyframes notifyIn {
+  from { opacity: 0; transform: translateX(8px) scale(0.99); }
+  to   { opacity: 1; transform: translateX(0) scale(1); }
+}
+
+/* ----------------------------------------
+   Table row highlight animation
+   ---------------------------------------- */
+.table-row-highlight {
+  animation: highlightRow 1000ms ease;
+}
+@keyframes highlightRow {
+  0%   { background-color: rgba(255,235,205,0.0); }
+  50%  { background-color: rgba(255,235,205,0.45); }
+  100% { background-color: transparent; }
+}
+
+/* ----------------------------------------
+   Tooltip fade/scale
+   ---------------------------------------- */
+.tooltip {
+  transform-origin: center center;
+  animation: tooltipIn 220ms var(--anim-ease) both;
+}
+@keyframes tooltipIn {
+  from { opacity: 0; transform: scale(0.96) translateY(6px); }
+  to   { opacity: 1; transform: scale(1) translateY(0); }
+}
+
+/* ----------------------------------------
+   Entrance stagger utilities (JS toggled with inline style)
+   JS: set --stagger-index on element and add .staggered
+   ---------------------------------------- */
+.staggered { opacity: 0; transform: translateY(10px); animation: staggerIn var(--stagger-duration, 360ms) var(--anim-ease) forwards; animation-delay: calc(var(--stagger-index, 0) * 60ms); }
+@keyframes staggerIn {
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* ----------------------------------------
+   Complex animated SVG helpers (stroke dash)
+   Add .svg-draw to <svg> path or shape
+   ---------------------------------------- */
+.svg-draw {
+  stroke-dasharray: 1000;
+  stroke-dashoffset: 1000;
+  animation: svgDraw 1400ms var(--anim-ease) forwards;
+}
+@keyframes svgDraw {
+  to { stroke-dashoffset: 0; }
+}
+
+/* ----------------------------------------
+   Cascading UI micro-interactions: focus ring pulse
+   ---------------------------------------- */
+.focus-pulse:focus {
+  animation: focusPulse 900ms ease;
+  outline: none;
+}
+@keyframes focusPulse {
+  0% { box-shadow: 0 0 0 0 rgba(76,130,255,0.18); }
+  100% { box-shadow: 0 0 0 12px rgba(76,130,255,0); }
+}
+
+/* ----------------------------------------
+   Sheet slide (bottom sheet)
+   ---------------------------------------- */
+.sheet {
+  transform: translateY(100%);
+  transition: transform 360ms var(--anim-ease);
+}
+.sheet.open { transform: translateY(0); }
+
+/* ----------------------------------------
+   Transition helpers for theme changes
+   ---------------------------------------- */
+.theme-transition {
+  transition-property: background-color, color, border-color, box-shadow, transform, opacity;
+  transition-duration: var(--anim-base);
+  transition-timing-function: var(--anim-ease);
+}
+
+/* ----------------------------------------
+   Misc micro-transitions used by components
+   ---------------------------------------- */
+.fade-up { transition: opacity var(--anim-base), transform var(--anim-base); transform: translateY(6px); }
+.fade-up.in { opacity: 1; transform: translateY(0); }
+.scale-in { transform: scale(0.98); transition: transform var(--anim-base), opacity var(--anim-base); }
+.scale-in.in { transform: scale(1); opacity: 1; }
+
+/* End of animation.css */

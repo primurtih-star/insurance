@@ -1,0 +1,345 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <title>Laporan Prediksi Asuransi</title>
+    
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800&family=Roboto+Mono:wght@500;700&display=swap" rel="stylesheet">
+    
+    <style>
+        /* --- 1. SETTING HALAMAN CETAK (A4) --- */
+        @page {
+            size: A4;
+            margin: 20mm;
+            @bottom-right {
+                content: "Halaman " counter(page) " dari " counter(pages);
+                font-size: 9pt;
+                color: #64748b;
+            }
+        }
+
+        /* --- 2. VARIABEL TEMA & FONT --- */
+        :root {
+    /* Font Definitions */
+    --font-ui: 'Plus Jakarta Sans', sans-serif;
+    --font-mono: 'Roboto Mono', monospace;
+    
+    /* Warna Utama (Emerald & Slate) */
+    --c-primary: #10b981;       /* Emerald */
+    --c-dark: #1e293b;          /* Slate Dark */
+    --c-muted: #64748b;         /* Slate Muted */
+    --c-border: #e2e8f0;        /* Border Soft */
+    --c-bg: #fdfbf7;            /* Cream White */
+}
+
+body {
+    /* FIX: Font yang lebih baik untuk print */
+    font-family: var(--font-ui), 'Helvetica Neue', Arial, sans-serif; 
+    font-size: 10pt;
+    color: var(--c-dark);
+    line-height: 1.5; /* Ditingkatkan sedikit untuk readability */
+    margin: 0;
+    background-color: #ffffff;
+}
+
+        /* --- 3. KOMPONEN UTAMA --- */
+        .header-table {
+            width: 100%;
+            border-bottom: 3px solid var(--c-primary);
+            padding-bottom: 15px;
+            margin-bottom: 25px;
+            border-collapse: collapse;
+        }
+
+        .header-table td {
+            vertical-align: top;
+            padding: 0;
+        }
+
+        .brand-name {
+            font-size: 18pt;
+            font-weight: 800;
+            color: var(--c-primary);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .brand-sub {
+            font-size: 9pt;
+            color: var(--c-muted);
+            margin-top: 2px;
+            font-weight: 600;
+        }
+
+        .meta-box {
+            text-align: right;
+            font-size: 9pt;
+            color: var(--c-muted);
+            font-family: var(--font-mono);
+        }
+
+        h2 {
+            font-size: 14pt;
+            color: var(--c-dark);
+            border-left: 4px solid var(--c-primary);
+            padding-left: 12px;
+            margin-top: 30px;
+            margin-bottom: 15px;
+            font-weight: 800;
+        }
+
+        /* --- 4. INFO NASABAH --- */
+        .info-grid {
+            width: 100%;
+            margin-bottom: 20px;
+            border-collapse: collapse;
+        }
+        
+        .info-grid td {
+            padding: 4px 0;
+            vertical-align: top;
+        }
+        
+        .label {
+            color: var(--c-muted);
+            font-size: 9pt;
+            width: 140px;
+            font-weight: 600;
+        }
+
+        /* --- 5. KOTAK HASIL PREDIKSI (Highlight) --- */
+        .result-box {
+            background-color: #f0fdf4;
+            border: 1px solid #d1fae5;
+            border-radius: 12px;
+            padding: 25px;
+            margin-bottom: 30px;
+        }
+
+        .result-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .result-value {
+            font-size: 22pt;
+            font-weight: 900;
+            color: var(--c-primary);
+            font-family: var(--font-mono);
+        }
+
+        .result-label {
+            font-size: 9pt;
+            color: var(--c-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 5px;
+        }
+
+        /* --- 6. TABEL DATA --- */
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 10px;
+            font-size: 9pt;
+        }
+
+        .data-table th, .data-table td {
+            border: 1px solid var(--c-border);
+            padding: 10px 12px;
+            text-align: left;
+        }
+
+        .data-table th {
+            background-color: #f8fafc;
+            color: var(--c-dark);
+            font-weight: 800;
+        }
+        
+        /* Badges */
+        .badge {
+            display: inline-block;
+            padding: 4px 10px;
+            border-radius: 50px;
+            font-size: 8pt;
+            font-weight: 700;
+            text-transform: uppercase;
+        }
+        
+        .bg-low { background: #dcfce7; color: #15803d; border: 1px solid #86efac; }
+        .bg-med { background: #fef3c7; color: #b45309; border: 1px solid #fcd34d; }
+        .bg-high { background: #fee2e2; color: #b91c1c; border: 1px solid #fca5a5; }
+
+        /* --- 7. FOOTER --- */
+        .footer {
+            margin-top: 40px;
+            padding-top: 15px;
+            border-top: 1px solid var(--c-border);
+            font-size: 8pt;
+            color: #94a3b8;
+            text-align: center;
+        }
+
+        .watermark {
+            position: absolute;
+            top: 40%;
+            left: 20%;
+            font-size: 65pt;
+            color: rgba(16, 185, 129, 0.05);
+            transform: rotate(-45deg);
+            z-index: -1;
+            font-weight: 800;
+            user-select: none;
+            opacity: 0.8;
+            font-family: var(--font-ui);
+        }
+        
+        /* Utility */
+        .avoid-break { page-break-inside: avoid; }
+    </style>
+</head>
+<body>
+
+    <div class="watermark">HEALTH DATA</div>
+
+    <table class="header-table avoid-break">
+        <tr>
+            <td style="width: 50%;">
+                <div class="brand-name">HealthTech AI</div>
+                <div class="brand-sub">Advanced Insurance Prediction System</div>
+            </td>
+            <td style="width: 50%; text-align: right;">
+                <div class="meta-box">
+                    <strong>LAPORAN RESMI</strong><br>
+                    No. Ref: #{{ report_id | default('REQ-0000') }}<br>
+                    Tanggal: {{ prediction_date | default('Unknown Date') }}
+                </div>
+            </td>
+        </tr>
+    </table>
+
+    <table class="info-grid avoid-break">
+        <tr>
+            <td class="label">Nama Nasabah:</td>
+            <td><strong>{{ customer_name | default('-') }}</strong></td>
+            <td class="label">ID Nasabah:</td>
+            <td>{{ customer_id | default('-') }}</td>
+        </tr>
+        <tr>
+            <td class="label">Usia:</td>
+            <td>{{ features.age | default('-') }} Tahun</td>
+            <td class="label">Jenis Kelamin:</td>
+            <td>{{ features.gender | default('-') }}</td>
+        </tr>
+        <tr>
+            <td class="label">Wilayah:</td>
+            <td>{{ features.region | default('-') }}</td>
+            <td class="label">Produk:</td>
+            <td>{{ features.product_type | default('Standar') }}</td>
+        </tr>
+    </table>
+
+    <h2 class="avoid-break">Ringkasan Hasil Prediksi</h2>
+    <div class="result-box avoid-break">
+        <table class="result-table">
+            <tr>
+                <td style="width: 50%; border-right: 1px dashed #cbd5e1; padding-right: 25px;">
+                    <div class="result-label">Estimasi Premi Tahunan</div>
+                    <div class="result-value">{{ estimated_premium | default('Rp 0') }}</div>
+                    <div style="font-size: 8pt; color: var(--c-muted); margin-top: 5px;">
+                        *Belum termasuk pajak & biaya admin
+                    </div>
+                </td>
+                <td style="width: 50%; padding-left: 25px; vertical-align: middle;">
+                    <div class="result-label">Profil Risiko</div>
+                    <div style="margin-top: 5px;">
+                        {% set level = risk_level | default('LOW') %}
+                        {% if level == "HIGH" %}
+                            <span class="badge bg-high">HIGH RISK (TINGGI)</span>
+                        {% elif level == "MEDIUM" %}
+                            <span class="badge bg-med">MEDIUM RISK (SEDANG)</span>
+                        {% else %}
+                            <span class="badge bg-low">LOW RISK (RENDAH)</span>
+                        {% endif %}
+                    </div>
+                    <div style="margin-top: 8px; font-size: 9pt;">
+                        Probabilitas Klaim: <strong>{{ claim_probability | default('0%') }}</strong>
+                    </div>
+                </td>
+            </tr>
+        </table>
+    </div>
+
+    <h2 class="avoid-break">Analisis Faktor Risiko</h2>
+    <p style="font-size: 9pt; color: var(--c-muted); margin-bottom: 10px;">
+        Berikut adalah rincian variabel medis dan gaya hidup yang mempengaruhi kalkulasi premi.
+    </p>
+
+    <table class="data-table">
+        <thead>
+            <tr>
+                <th style="width: 30%;">Indikator</th>
+                <th style="width: 20%;">Nilai Input</th>
+                <th style="width: 20%;">Kontribusi Biaya</th>
+                <th style="width: 30%;">Catatan Medis</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td>Indeks Massa Tubuh (BMI)</td>
+                <td>{{ features.bmi | default('-') }}</td>
+                <td>
+                    {% if features.bmi|float > 30 %}
+                        <span style="color:#b91c1c;">+ Tinggi</span>
+                    {% else %}
+                        <span style="color:#15803d;">Normal</span>
+                    {% endif %}
+                </td>
+                <td>Kategori Obesitas/Berat Badan</td>
+            </tr>
+            <tr>
+                <td>Status Merokok</td>
+                <td>{{ features.smoker | default('Tidak') }}</td>
+                <td>
+                    {% if features.smoker == 'Ya' %}
+                        <span style="color:#b91c1c;">+ Signifikan</span>
+                    {% else %}
+                        <span style="color:#15803d;">Neutral</span>
+                    {% endif %}
+                </td>
+                <td>Faktor risiko kardiovaskular</td>
+            </tr>
+            <tr>
+                <td>Jumlah Anak / Tanggungan</td>
+                <td>{{ features.children | default('0') }}</td>
+                <td>Standar</td>
+                <td>Tanggungan polis keluarga</td>
+            </tr>
+            {% for row in risk_factors %}
+            <tr>
+                <td>{{ row.label }}</td>
+                <td>{{ row.value }}</td>
+                <td>{{ row.contribution }}</td>
+                <td>{{ row.note }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <div class="avoid-break">
+        <h2>Rekomendasi Sistem</h2>
+        <div style="background: #f8fafc; padding: 15px; border-left: 3px solid var(--c-muted); font-size: 9pt; text-align: justify; border-radius: 4px;">
+            {{ recommendation_text | default('Berdasarkan analisis data, nasabah disarankan untuk mengambil paket asuransi dengan perlindungan penyakit kritis mengingat faktor risiko yang terdeteksi. Premi dapat ditinjau ulang jika nasabah berhenti merokok atau menurunkan BMI dalam 12 bulan ke depan.') }}
+        </div>
+    </div>
+
+    <div class="footer avoid-break">
+        <p>
+            Dokumen ini dibuat secara otomatis oleh sistem <strong>HealthTech AI Prediction</strong>.<br>
+            Keputusan akhir penentuan premi tetap berada pada wewenang tim aktuaria dan underwriting.<br>
+            <i>Generated at: {{ current_timestamp }}</i>
+        </p>
+    </div>
+
+</body>
+</html>

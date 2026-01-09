@@ -1,0 +1,766 @@
+{% extends "layout.html" %}
+{% block content %}
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+<style>
+:root {
+    --accent: #3b82f6;
+    --bg-hover: #f1f5f9;
+    --bg-main: #f8fafc;
+    --bg-panel: rgba(255, 255, 255, 0.95);
+    --border-color: #e2e8f0;
+    --danger: #ef4444;
+    --font-ui: 'Plus Jakarta Sans', sans-serif;
+    --primary: #059669;
+    --primary-bg: #ecfdf5;
+    --primary-light: #10b981;
+    --text-dark: #1e293b;
+    --text-muted: #64748b;
+    --warning: #f59e0b;
+}
+
+body {
+    background: radial-gradient(circle at top left, #f0fdf4, #fff7ed);
+    font-family: var(--font-ui);
+}
+
+.archive-container {
+    color: var(--text-dark);
+    margin: 0 auto;
+    max-width: 1300px;
+    min-height: 100vh;
+    padding: 40px 20px;
+}
+
+.header-section {
+    align-items: flex-end;
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 30px;
+}
+
+.page-title h1 {
+    color: var(--text-dark);
+    font-size: 2.2rem;
+    font-weight: 800;
+    letter-spacing: -1px;
+    margin: 0;
+}
+
+.page-title h1 i {
+    color: var(--primary);
+    margin-right: 10px;
+}
+
+.page-title p {
+    color: var(--text-muted);
+    font-size: 1rem;
+    margin-top: 5px;
+}
+
+.sys-status {
+    color: var(--text-muted);
+    font-size: 0.75rem;
+    font-weight: 600;
+    line-height: 1.5;
+    text-align: right;
+}
+
+.sys-status span.blink {
+    color: var(--primary);
+    font-weight: 700;
+}
+
+.stats-grid {
+    display: grid;
+    gap: 20px;
+    grid-template-columns: repeat(3, 1fr);
+    margin-bottom: 30px;
+}
+
+.stat-card {
+    background: white;
+    border: 1px solid var(--border-color);
+    border-radius: 16px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+    overflow: hidden;
+    padding: 25px;
+    position: relative;
+    transition: transform 0.2s;
+}
+
+.stat-card:hover {
+    box-shadow: 0 10px 20px rgba(16,185,129,0.1);
+    transform: translateY(-3px);
+}
+
+.stat-icon {
+    font-size: 3rem;
+    opacity: 0.15;
+    position: absolute;
+    right: 15px;
+    top: 15px;
+}
+
+.stat-label {
+    color: var(--text-muted);
+    font-size: 0.8rem;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+}
+
+.stat-val {
+    color: var(--text-dark);
+    font-size: 2.2rem;
+    font-weight: 800;
+    margin-bottom: 5px;
+}
+
+.stat-card.blue .stat-val { color: var(--accent); }
+.stat-card.emerald .stat-val { color: var(--primary); }
+.stat-card.orange .stat-val { color: var(--warning); }
+
+.chart-panel {
+    background: var(--bg-panel);
+    backdrop-filter: blur(10px);
+    border: 1px solid white;
+    border-radius: 20px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.05);
+    margin-bottom: 30px;
+    padding: 30px;
+}
+
+.chart-header {
+    align-items: center;
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 15px;
+}
+
+.chart-title {
+    color: var(--primary);
+    font-size: 1.1rem;
+    font-weight: 700;
+}
+
+.toolbar {
+    align-items: center;
+    background: var(--bg-panel);
+    border: 1px solid white;
+    border-radius: 16px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 25px;
+    padding: 15px;
+}
+
+.search-box {
+    flex-grow: 1;
+    margin-right: 15px;
+    position: relative;
+}
+
+.search-input {
+    background: white;
+    border: 1px solid var(--border-color);
+    border-radius: 10px;
+    color: var(--text-dark);
+    padding: 10px 15px 10px 40px;
+    transition: 0.3s;
+    width: 100%;
+}
+
+.search-input:focus {
+    border-color: var(--primary-light);
+    box-shadow: 0 0 0 4px rgba(16,185,129,0.1);
+}
+
+.search-icon {
+    color: var(--text-muted);
+    left: 15px;
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+}
+
+.btn-action {
+    border-radius: 10px;
+    font-weight: 700;
+    height: 40px;
+    padding: 0 15px;
+    transition: 0.2s;
+}
+
+.btn-danger {
+    background: var(--danger);
+    border: none;
+    box-shadow: 0 5px 15px rgba(239,68,68,0.3);
+    color: white;
+}
+
+.btn-danger:hover {
+    background: #c51b1b;
+    transform: translateY(-1px);
+}
+
+.table-container {
+    background: var(--bg-panel);
+    border: 1px solid white;
+    border-radius: 16px;
+    box-shadow: 0 10px 40px -10px rgba(0,0,0,0.05);
+    overflow-x: auto;
+}
+
+.history-table {
+    border-collapse: collapse;
+    width: 100%;
+}
+
+.history-table th {
+    background: var(--bg-hover);
+    color: var(--text-dark);
+    cursor: pointer;
+    font-size: 0.8rem;
+    font-weight: 700;
+    padding: 15px 20px;
+    text-align: left;
+    text-transform: uppercase;
+}
+
+.history-table th i {
+    color: var(--text-muted);
+    margin-left: 5px;
+}
+
+.history-table th:hover {
+    background: var(--primary-bg);
+}
+
+.history-table td {
+    border-bottom: 1px solid var(--border-color);
+    color: var(--text-dark);
+    font-size: 0.9rem;
+    padding: 15px 20px;
+}
+
+.history-table tr:hover td {
+    background: var(--primary-bg);
+}
+
+.history-table tbody tr:last-child td {
+    border-bottom: none;
+}
+
+.badge-tech {
+    border-radius: 6px;
+    font-size: 0.75rem;
+    font-weight: 700;
+    padding: 4px 8px;
+}
+
+.b-green {
+    background: #d1fae5;
+    color: var(--primary);
+}
+
+.b-red {
+    background: #fee2e2;
+    color: var(--danger);
+}
+
+.cost-val {
+    color: var(--accent);
+    font-weight: 800;
+}
+
+.time-stamp {
+    color: var(--text-muted);
+    font-size: 0.8rem;
+}
+
+.row-actions {
+    display: flex;
+    gap: 8px;
+    justify-content: flex-end;
+}
+
+.act-btn {
+    align-items: center;
+    background: var(--border-color);
+    border: none;
+    border-radius: 8px;
+    color: var(--text-muted);
+    cursor: pointer;
+    display: inline-flex;
+    height: 35px;
+    justify-content: center;
+    transition: 0.2s;
+    width: 35px;
+}
+
+.act-btn:hover {
+    background: var(--accent);
+    color: white;
+}
+
+.act-btn.del:hover {
+    background: var(--danger);
+    color: white;
+}
+
+.edit-field {
+    background: var(--bg-hover);
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    color: var(--text-dark);
+    padding: 5px;
+    width: 100%;
+}
+
+.edit-field:focus {
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px rgba(16,185,129,0.1);
+}
+
+.edit-row-bg td {
+    background: rgba(59,130,246,0.1) !important;
+}
+
+.fade-in-down { animation: fadeInDown 0.8s ease forwards; }
+.fade-in-up { animation: fadeInUp 0.8s ease forwards; opacity: 0; }
+
+@keyframes fadeInDown {
+    from { opacity: 0; transform: translateY(-20px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes fadeInUp {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+</style>
+
+<div class="archive-container">
+    
+    <div class="header-section fade-in-down">
+        <div class="page-title">
+            <h1><i class="fas fa-archive"></i> Data Archive</h1>
+            <p>Pusat Arsip Riwayat Prediksi dan Database Pasien</p>
+        </div>
+        <div class="sys-status">
+            SYSTEM STATUS: <span class="blink">OPTIMAL</span><br>
+            <span id="last-sync">SYNCING...</span>
+        </div>
+    </div>
+    
+    <div class="stats-grid fade-in-up" style="animation-delay: 0.1s;">
+        <div class="stat-card emerald">
+            <i class="fas fa-users stat-icon"></i>
+            <div class="stat-val" id="total-records">0</div>
+            <div class="stat-label">Total Patient Records</div>
+        </div>
+        
+        <div class="stat-card blue">
+            <i class="fas fa-coins stat-icon"></i>
+            <div class="stat-val" id="avg-cost">$ 0.00</div>
+            <div class="stat-label">Average Predicted Cost</div>
+        </div>
+        
+        <div class="stat-card orange">
+            <i class="fas fa-smoking stat-icon"></i>
+            <div class="stat-val" id="smoker-pct">0%</div>
+            <div class="stat-label">High Risk Ratio</div>
+        </div>
+    </div>
+
+    <div class="chart-panel fade-in-up" style="animation-delay: 0.2s;">
+        <div class="chart-header">
+            <div class="chart-title">
+                <i class="fas fa-chart-line"></i> INSURANCE COST TRENDS (Last 15 Records)
+            </div>
+            <button class="act-btn" onclick="archiveManager.refreshData()">
+                <i class="fas fa-sync-alt"></i> Refresh
+            </button>
+        </div>
+        <div style="height: 300px; width: 100%;">
+            <canvas id="trendChart"></canvas>
+        </div>
+    </div>
+
+    <div class="toolbar fade-in-up" style="animation-delay: 0.3s;">
+        <div class="search-box">
+            <i class="fas fa-search search-icon"></i>
+            <input id="searchInput" class="search-input" type="text" placeholder="Search by Name, Region, or ID...">
+        </div>
+        <button class="btn-action btn-danger" onclick="archiveManager.clearDatabase()">
+            <i class="fas fa-trash-alt"></i> HAPUS SEMUA
+        </button>
+    </div>
+
+    <div class="table-container fade-in-up" style="animation-delay: 0.4s;">
+        <table class="history-table">
+            <thead>
+                <tr>
+                    <th width="15%" onclick="archiveManager.sort('timestamp')">TIMESTAMP <i class="fas fa-sort"></i></th>
+                    <th width="15%" onclick="archiveManager.sort('name')">PATIENT NAME <i class="fas fa-sort"></i></th>
+                    <th width="10%" onclick="archiveManager.sort('age')">AGE/BMI</th>
+                    <th width="10%" onclick="archiveManager.sort('smoker')">STATUS</th>
+                    <th width="10%">REGION</th>
+                    <th width="5%">CHILDREN</th>
+                    <th width="15%" onclick="archiveManager.sort('prediction')">PREDICTED COST <i class="fas fa-sort"></i></th>
+                    <th width="15%" style="text-align: right;">ACTIONS</th>
+                </tr>
+            </thead>
+            <tbody id="archive-body">
+                <tr>
+                    <td colspan="8" style="text-align: center; padding: 50px; color: var(--text-muted);">
+                        INITIALIZING DATA LINK...
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+<script>
+class ArchiveManager {
+
+    apiBase = "/api/predict/history";
+    data = [];
+    filteredData = [];
+    chart = null;
+    editIdx = null;
+    sortConfig = { key: 'timestamp', dir: 'desc' };
+
+    constructor() {
+        this.init();
+    }
+
+    async init() {
+        document.getElementById('searchInput').addEventListener('input', (e) => {
+            this.handleSearch(e.target.value);
+        });
+        await this.loadData();
+    }
+
+    async loadData() {
+        try {
+            const res = await fetch(this.apiBase);
+            if (!res.ok) throw new Error();
+
+            this.data = await res.json();
+
+            this.data.sort((a, b) => {
+                if (a.timestamp < b.timestamp) return 1;
+                if (a.timestamp > b.timestamp) return -1;
+                return 0;
+            });
+
+            this.filteredData = [...this.data];
+
+            this.updateStats();
+            this.renderTable();
+            this.renderChart();
+
+            document.getElementById('last-sync').innerText =
+                "LAST SYNC: " + new Date().toLocaleTimeString();
+        } catch {
+            document.getElementById('archive-body').innerHTML = `
+                <tr><td colspan="8" style="text-align:center; color:var(--danger); padding:30px;">
+                <i class="fas fa-exclamation-triangle"></i> CONNECTION SEVERED: Gagal memuat data history.
+                </td></tr>`;
+        }
+    }
+
+    async refreshData() {
+        document.getElementById('archive-body').style.opacity = '0.5';
+        await this.loadData();
+        document.getElementById('archive-body').style.opacity = '1';
+    }
+
+    renderTable() {
+        const tbody = document.getElementById('archive-body');
+        tbody.innerHTML = '';
+
+        if (this.filteredData.length === 0) {
+            tbody.innerHTML = `
+            <tr><td colspan="8" style="text-align:center; padding:50px; color:var(--text-muted);">
+            NO RECORDS FOUND in the current filter or database.
+            </td></tr>`;
+            return;
+        }
+
+        this.filteredData.forEach((item) => {
+            const originalIndex = this.data.indexOf(item);
+            const row = document.createElement('tr');
+
+            row.innerHTML = this.editIdx === originalIndex
+                ? this.getEditRow(item, originalIndex)
+                : this.getViewRow(item, originalIndex);
+
+            if (this.editIdx === originalIndex) row.classList.add('edit-row-bg');
+
+            tbody.appendChild(row);
+        });
+    }
+
+    getViewRow(item, idx) {
+        const fmtPrice = new Intl.NumberFormat('en-US', { 
+            style: 'currency', 
+            currency: 'USD', 
+         maximumFractionDigits: 2 
+        }).format(item.prediction);
+
+        const smokerBadge = item.smoker === 'yes'
+            ? `<span class="badge-tech b-red"><i class="fas fa-smoking"></i> RISK</span>`
+            : `<span class="badge-tech b-green">CLEAN</span>`;
+        const genderIcon = item.sex === 'male'
+            ? `<i class="fas fa-mars" style="color:#3b82f6"></i>`
+            : `<i class="fas fa-venus" style="color:#ec4899"></i>`;
+
+        return `
+            <td class="time-stamp">${item.timestamp || 'N/A'}</td>
+            <td><strong>${item.name || 'Anonymous'}</strong> ${genderIcon}</td>
+            <td>${item.age} Yrs / <span style="color:var(--text-muted)">${parseFloat(item.bmi).toFixed(1)}</span></td>
+            <td>${smokerBadge}</td>
+            <td style="text-transform:capitalize;">${item.region}</td>
+            <td style="text-align:center;">${item.children}</td>
+            <td class="cost-val">${fmtPrice}</td>
+            <td>
+                <div class="row-actions">
+                    <button class="act-btn" onclick="archiveManager.startEdit(${idx})">
+                        <i class="fas fa-pen"></i>
+                    </button>
+                    <button class="act-btn del" onclick="archiveManager.deleteItem(${idx})">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                </div>
+            </td>`;
+    }
+
+    getEditRow(item, idx) {
+        return `
+            <td style="font-size:0.8rem; color:var(--text-muted);">EDITING...</td>
+            <td><input id="e-name" class="edit-field" value="${item.name || ''}"></td>
+            <td>
+                <div style="display:flex; gap:5px;">
+                    <input id="e-age" class="edit-field" type="number" value="${item.age}" style="width:50px">
+                    <input id="e-bmi" class="edit-field" type="number" value="${item.bmi}" step="0.1" style="width:60px">
+                </div>
+            </td>
+            <td>
+                <select id="e-smoker" class="edit-field">
+                    <option value="yes" ${item.smoker == 'yes' ? 'selected' : ''}>Smoker</option>
+                    <option value="no" ${item.smoker == 'no' ? 'selected' : ''}>Non</option>
+                </select>
+            </td>
+            <td>
+                <select id="e-region" class="edit-field">
+                    <option value="southeast" ${item.region == 'southeast' ? 'selected' : ''}>SE</option>
+                    <option value="southwest" ${item.region == 'southwest' ? 'selected' : ''}>SW</option>
+                    <option value="northeast" ${item.region == 'northeast' ? 'selected' : ''}>NE</option>
+                    <option value="northwest" ${item.region == 'northwest' ? 'selected' : ''}>NW</option>
+                </select>
+            </td>
+            <td><input id="e-children" class="edit-field" type="number" value="${item.children}" style="width:50px; text-align:center;"></td>
+            <td style="font-size:0.8rem; font-style:italic; color:var(--warning);">Will Recalc</td>
+            <td>
+                <div class="row-actions">
+                    <button class="act-btn" style="background:var(--primary); color:white" onclick="archiveManager.saveEdit(${idx})">
+                        <i class="fas fa-check"></i>
+                    </button>
+                    <button class="act-btn" onclick="archiveManager.cancelEdit()">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+            </td>`;
+    }
+
+    updateStats() {
+        const total = this.data.length;
+        const totalCost = this.data.reduce((acc, curr) => acc + (curr.prediction || 0), 0);
+        const avg = total > 0 ? totalCost / total : 0;
+        const smokers = this.data.filter(d => d.smoker === 'yes').length;
+        const smokerPct = total > 0 ? ((smokers / total) * 100).toFixed(1) : 0;
+
+        document.getElementById('total-records').innerText = total;
+        document.getElementById('avg-cost').innerText = new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 2 }).format(avg);
+        document.getElementById('smoker-pct').innerText = smokerPct + "%";
+    }
+
+    renderChart() {
+        const ctx = document.getElementById('trendChart').getContext('2d');
+        if (this.chart) this.chart.destroy();
+
+        const recent = this.data.slice(-15);
+        const labels = recent.map(d => d.name ? d.name.split(' ')[0] : 'Anonim');
+        const values = recent.map(d => d.prediction);
+
+        const gradient = ctx.createLinearGradient(0, 0, 0, 300);
+        gradient.addColorStop(0, 'rgba(5, 150, 105, 0.5)');
+        gradient.addColorStop(1, 'rgba(5, 150, 105, 0.0)');
+
+        Chart.defaults.font.family = "'Plus Jakarta Sans', sans-serif";
+
+        this.chart = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels,
+                datasets: [{
+                    data: values,
+                    fill: true,
+                    tension: 0.4,
+                    borderColor: '#059669',
+                    backgroundColor: gradient,
+                    borderWidth: 2,
+                    pointBackgroundColor: 'white',
+                    pointBorderColor: '#059669',
+                    pointHoverRadius: 6
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: { legend: { display: false } },
+                maintainAspectRatio: false,
+                scales: {
+                    x: { grid: { display: false } },
+                    y: {
+                        grid: { color: 'rgba(0,0,0,0.05)' },
+                        ticks: {
+                            color: '#64748b',
+                            callback: (v) => v >= 1000000 ? (v / 1000000).toFixed(1) + 'M' : v.toLocaleString()
+                        }
+                    }
+                }
+            }
+        });
+    }
+
+    startEdit(idx) {
+        this.editIdx = idx;
+        this.renderTable();
+    }
+
+    cancelEdit() {
+        this.editIdx = null;
+        this.renderTable();
+    }
+
+    async saveEdit(originalIndex) {
+        const currentData = this.data[originalIndex];
+        
+        const updatedData = {
+            ...currentData,
+            name: document.getElementById('e-name').value,
+            age: parseFloat(document.getElementById('e-age').value),
+            bmi: parseFloat(document.getElementById('e-bmi').value),
+            smoker: document.getElementById('e-smoker').value,
+            region: document.getElementById('e-region').value,
+            children: parseInt(document.getElementById('e-children').value)
+        };
+
+        Swal.fire({ title: 'Recalculating...', didOpen: () => Swal.showLoading() });
+
+        try {
+            const res = await fetch('/api/predict/recalculate', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(updatedData)
+            });
+
+            const result = await res.json();
+            if (result.error) throw new Error(result.error);
+
+            this.data[originalIndex] = { ...updatedData, prediction: result.prediction };
+
+            this.editIdx = null;
+            this.filteredData = [...this.data];
+
+            this.updateStats();
+            this.renderTable();
+            this.renderChart();
+
+            Swal.fire('Updated!', 'Data pasien berhasil diperbarui.', 'success');
+        } catch {
+            Swal.fire('Error Recalculating', 'Gagal terhubung ke AI.', 'error');
+            this.cancelEdit();
+        }
+    }
+
+    async deleteItem(originalIndex) {
+        const item = this.data[originalIndex];
+
+        const confirm = await Swal.fire({
+            title: 'Hapus Record?',
+            text: `Hapus data pasien ${item.name || 'Anonim'}?`,
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#ef4444',
+            cancelButtonColor: '#64748b',
+            confirmButtonText: 'Ya, Hapus Permanen'
+        });
+
+        if (confirm.isConfirmed) {
+            this.data.splice(originalIndex, 1);
+            this.filteredData = [...this.data];
+            this.updateStats();
+            this.renderTable();
+            this.renderChart();
+            Swal.fire('Terhapus!', 'Record berhasil dihapus.', 'success');
+        }
+    }
+
+    async clearDatabase() {
+        const confirm = await Swal.fire({
+            title: 'PURGE SEMUA DATA?',
+            text: "Tindakan ini tidak bisa dibatalkan.",
+            icon: 'error',
+            showCancelButton: true,
+            confirmButtonColor: '#ef4444',
+            cancelButtonColor: '#64748b',
+            confirmButtonText: 'Ya, Hapus Semua'
+        });
+
+        if (confirm.isConfirmed) {
+            this.data = [];
+            this.filteredData = [];
+            this.updateStats();
+            this.renderTable();
+            this.renderChart();
+            Swal.fire('Data Terhapus!', 'Semua data bersih.', 'success');
+        }
+    }
+
+    handleSearch(keyword) {
+        keyword = keyword.toLowerCase().trim();
+        this.filteredData = this.data.filter(item =>
+            (item.name && item.name.toLowerCase().includes(keyword)) ||
+            (item.region && item.region.toLowerCase().includes(keyword)) ||
+            (item.timestamp && item.timestamp.toLowerCase().includes(keyword))
+        );
+        this.renderTable();
+    }
+
+    sort(key) {
+        const isAsc = this.sortConfig.key === key && this.sortConfig.dir === 'asc';
+        this.sortConfig = { key, dir: isAsc ? 'desc' : 'asc' };
+
+        this.filteredData.sort((a, b) => {
+            const valA = a[key];
+            const valB = b[key];
+            if (typeof valA === 'string') return isAsc ? valA.localeCompare(valB) : valB.localeCompare(valA);
+            return isAsc ? (valA - valB) : (valB - valA);
+        });
+
+        this.renderTable();
+    }
+}
+
+const archiveManager = new ArchiveManager();
+</script>
+{% endblock %}
